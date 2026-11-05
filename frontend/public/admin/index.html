@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting to Admin...</title>
+  <script>
+    // Redirect to backend Django admin
+    // VITE_API_URL is injected at build time, fallback reads from localStorage or prompts
+    var api = '%%VITE_API_URL%%' !== '' && '%%VITE_API_URL%%'.indexOf('%%') === -1
+      ? '%%VITE_API_URL%%'
+      : localStorage.getItem('admin_api_url');
+    if (!api) {
+      api = prompt('Enter backend admin URL (e.g. https://your-ngrok.ngrok-free.app)');
+      if (api) localStorage.setItem('admin_api_url', api);
+    }
+    if (api) {
+      window.location.href = api.replace(/\/$/, '') + '/admin/';
+    } else {
+      document.write('<p style="font-family:sans-serif;text-align:center;margin-top:40vh">No backend URL configured.</p>');
+    }
+  </script>
+</head>
+<body></body>
+</html>

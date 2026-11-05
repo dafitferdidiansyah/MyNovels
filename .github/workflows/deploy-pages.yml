@@ -48,6 +48,9 @@ jobs:
           VITE_BASE_PATH: './'
         run: npm run build
 
+      - name: Inject API URL into admin redirect
+        run: sed -i "s|%%VITE_API_URL%%|${{ secrets.VITE_API_URL }}|g" dist/admin/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
