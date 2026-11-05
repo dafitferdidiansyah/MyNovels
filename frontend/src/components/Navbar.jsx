@@ -1,8 +1,5 @@
 import React from 'react';
-import { getAdminAddUrl } from '../api';
-
 export default function Navbar({ onOpenScan, searchQuery, onSearchChange, onSearchSubmit, readerApps }) {
-  const adminAddUrl = getAdminAddUrl();
 
   return (
     <header className="border-bottom bg-white sticky-top shadow-xs">
@@ -73,15 +70,7 @@ export default function Navbar({ onOpenScan, searchQuery, onSearchChange, onSear
                 </ul>
               </div>
             )}
-            <a
-              href={`${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/admin/`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-outline-dark btn-sm rounded-pill px-3 fw-medium d-inline-flex align-items-center gap-1 shadow-xs"
-              title="Open Admin Dashboard"
-            >
-              ⚙ Admin Panel
-            </a>
+
           </div>
         </div>
       </nav>

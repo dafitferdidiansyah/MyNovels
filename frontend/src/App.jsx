@@ -479,15 +479,7 @@ export default function App() {
                 ))}
               </div>
             )}
-            <a
-              href={`${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/admin/`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-decoration-none text-muted"
-              title="Server Admin Dashboard"
-            >
-              ⚙ Admin
-            </a>
+
             <span className="text-secondary">
               UI by{' '}
               <a
