@@ -25,6 +25,7 @@ class ReaderAppAdmin(admin.ModelAdmin):
 class GenreAdmin(admin.ModelAdmin):
     list_display = ["name", "slug"]
     search_fields = ["name", "slug"]
+    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(EpubBook)
@@ -33,6 +34,8 @@ class EpubBookAdmin(admin.ModelAdmin):
     search_fields = ["title", "author", "description", "original_title"]
     list_filter = ["language", "genres", "created_at"]
     readonly_fields = ["file_size_bytes", "created_at", "updated_at"]
+    filter_horizontal = ["genres"]
+    autocomplete_fields = []
     fields = [
         "epub_file",
         "title",
@@ -52,14 +55,34 @@ class EpubBookAdmin(admin.ModelAdmin):
         "updated_at",
     ]
 
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        return initial
+
     def save_model(self, request, obj, form, change):
+        # Pre-fill title from filename before save if title is empty or default
+        if obj.epub_file and (not obj.title or obj.title == "New Book"):
+            from pathlib import Path
+            stem_name = Path(obj.epub_file.name).stem
+            if " - " in stem_name:
+                obj.title = stem_name.rsplit(" - ", 1)[0].strip()
+            else:
+                obj.title = stem_name
+
         super().save_model(request, obj, form, change)
+
         # Jika file epub diupload lewat form admin, auto-parse metadata & cover otomatis!
         if obj.epub_file and (not obj.total_chapters or "epub_file" in form.changed_data):
             try:
                 parsed = parse_epub(obj.epub_file.path)
-                if not obj.title or obj.title == "New Book":
-                    obj.title = parsed.get("title") or obj.title
+                # Filename-derived title takes priority if title is blank or default/stem
+                filename_title = Path(obj.epub_file.name).stem
+                if " - " in filename_title:
+                    filename_title = filename_title.rsplit(" - ", 1)[0].strip()
+
+                if not obj.title or obj.title in ["New Book", "Unknown", filename_title]:
+                    obj.title = filename_title if filename_title else (parsed.get("title") or obj.title)
+                
                 if not obj.original_title:
                     obj.original_title = parsed.get("original_title", "")
                 if not obj.author or obj.author == "Unknown":

@@ -9,7 +9,7 @@ export default function Navbar({ onOpenScan, searchQuery, onSearchChange, onSear
       <nav className="navbar navbar-expand-lg navbar-light py-2">
         <div className="container-fluid px-3 px-md-4">
           {/* Brand Logo & Subtitle */}
-          <a className="navbar-brand d-flex align-items-center gap-2 m-0 text-decoration-none" href="/">
+          <a className="navbar-brand d-flex align-items-center gap-2 m-0 text-decoration-none" href={import.meta.env.BASE_URL || './'}>
             <span className="badge bg-dark text-white rounded-pill px-3 py-1 fs-6 fw-bold shadow-xs">
               Read This
             </span>

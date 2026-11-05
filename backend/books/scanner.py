@@ -67,6 +67,11 @@ def parse_epub(epub_path: str) -> dict:
     file_size = os.path.getsize(epub_path)
     stem_name = Path(epub_path).stem
 
+    # Filename-based title parsing: typically "Title - Author.epub" or "Title.epub"
+    filename_title = stem_name
+    if " - " in stem_name:
+        filename_title = stem_name.rsplit(" - ", 1)[0].strip()
+
     with zipfile.ZipFile(epub_path, "r") as zf:
         # 1. Parse META-INF/container.xml
         try:
@@ -90,15 +95,19 @@ def parse_epub(epub_path: str) -> dict:
         if metadata is None:
             metadata = tree.find("metadata")
 
-        # Title
-        title = stem_name
+        # Title: Filename takes priority, DC metadata is fallback
+        title = filename_title
         original_title = ""
         if metadata is not None:
             title_elem = metadata.find("dc:title", DC_NS)
             if title_elem is None:
                 title_elem = metadata.find("{http://purl.org/dc/elements/1.1/}title")
             if title_elem is not None and title_elem.text:
-                title = title_elem.text.strip()
+                dc_title = title_elem.text.strip()
+                if not title or title in ["New Book", "Unknown", stem_name]:
+                    title = dc_title
+                else:
+                    original_title = dc_title
 
         # Creator / Author
         author = "Unknown"

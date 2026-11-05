@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import BookCard from './components/BookCard';
+import SkeletonCard from './components/SkeletonCard';
+import CoverImage from './components/CoverImage';
 import BookModal from './components/BookModal';
 import ScanModal from './components/ScanModal';
 import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps } from './api';
@@ -11,6 +13,7 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [readerApps, setReaderApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Search & Basic Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +68,7 @@ export default function App() {
   // Load books with WTR-Lab query
   const loadBooks = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchBooks({
         search: activeSearch,
@@ -79,6 +83,7 @@ export default function App() {
       setTotalCount(data.count || 0);
     } catch (err) {
       console.warn('Failed to load books:', err);
+      setError(err.message || 'Failed to connect to backend server. Please ensure backend is running.');
       setBooks([]);
       setTotalCount(0);
     } finally {
@@ -183,18 +188,22 @@ export default function App() {
                       style={{ width: '120px', cursor: 'pointer' }}
                       onClick={() => setSelectedBook(b)}
                     >
-                      <img
-                        src={b.cover || '/assets/cover_placeholder.svg'}
+                      <CoverImage
+                        src={b.cover || ''}
                         alt={b.title}
                         className="carousel-cover-img"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = '/assets/cover_placeholder.svg';
-                        }}
                       />
                       <p
-                        className="small fw-medium mt-2 mb-0 text-truncate text-dark text-start"
-                        style={{ fontSize: '12px' }}
+                        className="small fw-medium mt-2 mb-0 text-dark text-start"
+                        style={{
+                          fontSize: '12px',
+                          lineHeight: '1.3',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          height: '2.6em',
+                        }}
                         title={b.title}
                       >
                         {b.title}
@@ -372,12 +381,26 @@ export default function App() {
               </div>
             </div>
 
-            {loading ? (
-              <div className="text-center py-5">
-                <div className="spinner-border spinner-border-sm text-dark" role="status">
-                  <span className="visually-hidden">Loading...</span>
+            {error ? (
+              <div className="card text-center p-5 border rounded-3 bg-white shadow-xs">
+                <div className="mb-3">
+                  <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill" style={{ fontSize: '12px' }}>
+                    Connection Error
+                  </span>
                 </div>
-                <p className="text-muted small mt-2">Loading ePub novel archives...</p>
+                <h6 className="fw-bold text-dark mb-2">Unable to Load Novel Archives</h6>
+                <p className="text-muted small mb-3">{error}</p>
+                <div>
+                  <button className="btn btn-dark btn-sm rounded-pill px-4" onClick={loadBooks}>
+                    Retry Connection
+                  </button>
+                </div>
+              </div>
+            ) : loading ? (
+              <div className="row">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <SkeletonCard key={i} />
+                ))}
               </div>
             ) : books.length > 0 ? (
               <div className="row">
@@ -434,13 +457,13 @@ export default function App() {
       </main>
 
       {/* Footer with clean credits */}
-      <footer className="footer mt-auto py-3 bg-white border-top text-center text-muted small" style={{ fontSize: '12px' }}>
-        <div className="container d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
+      <footer className="footer mt-auto py-2 bg-white border-top text-center text-muted" style={{ fontSize: '11px' }}>
+        <div className="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 py-1">
           <span>Read This &copy; 2026 &bull; Direct EPUB Downloader</span>
-          <div className="d-flex align-items-center gap-3">
+          <div className="d-flex flex-wrap align-items-center justify-content-center gap-2">
             {readerApps && readerApps.length > 0 && (
-              <div className="d-flex align-items-center gap-2">
-                <span className="text-secondary">EPUB Readers:</span>
+              <div className="d-flex align-items-center gap-1">
+                <span className="text-secondary">Readers:</span>
                 {readerApps.map((app) => (
                   <a
                     key={app.id}
@@ -448,9 +471,10 @@ export default function App() {
                     target="_blank"
                     rel="noreferrer"
                     className="badge bg-light text-dark border text-decoration-none py-1 px-2"
+                    style={{ fontSize: '10px' }}
                     title={`Download ${app.name} APK`}
                   >
-                    📱 {app.name} {app.version}
+                    📱 {app.name}
                   </a>
                 ))}
               </div>
@@ -462,19 +486,10 @@ export default function App() {
               className="text-decoration-none text-muted"
               title="Server Admin Dashboard"
             >
-              ⚙ Admin Panel
+              ⚙ Admin
             </a>
             <span className="text-secondary">
-              UI theme adapted from{' '}
-              <a
-                href="https://github.com/taufiq-azr/lara-novelku"
-                target="_blank"
-                rel="noreferrer"
-                className="text-decoration-none fw-medium text-dark"
-              >
-                lara-novelku
-              </a>{' '}
-              by{' '}
+              UI by{' '}
               <a
                 href="https://github.com/taufiq-azr"
                 target="_blank"

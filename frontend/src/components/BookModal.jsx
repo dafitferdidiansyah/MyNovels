@@ -1,10 +1,11 @@
 import React from 'react';
 import { getDownloadUrl } from '../api';
+import CoverImage from './CoverImage';
 
 export default function BookModal({ book, onClose }) {
   if (!book) return null;
 
-  const coverUrl = book.cover || '/assets/cover_placeholder.svg';
+  const coverUrl = book.cover || '';
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const rawStatus = (book.status || 'Completed').toUpperCase();
 
@@ -44,14 +45,10 @@ export default function BookModal({ book, onClose }) {
               {/* Compact Cover */}
               <div className="col-4 text-center">
                 <div className="ratio-cover-container shadow-xs">
-                  <img
+                  <CoverImage
                     src={coverUrl}
                     className="novel-cover-img"
                     alt={book.title}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/assets/cover_placeholder.svg';
-                    }}
                   />
                 </div>
                 <div className="mt-2">

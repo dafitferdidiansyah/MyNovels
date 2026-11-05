@@ -1,8 +1,9 @@
 import React from 'react';
 import { getDownloadUrl } from '../api';
+import CoverImage from './CoverImage';
 
 export default function BookCard({ book, onOpenDetail }) {
-  const coverUrl = book.cover || '/assets/cover_placeholder.svg';
+  const coverUrl = book.cover || '';
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const primaryGenre = genres[0] || 'Web Novel';
   const rawStatus = (book.status || 'Completed').toUpperCase();
@@ -22,15 +23,11 @@ export default function BookCard({ book, onOpenDetail }) {
           {/* Cover container */}
           <div className="col-4 col-sm-3 p-2 d-flex flex-column justify-content-between">
             <div className="ratio-cover-container">
-              <img
+              <CoverImage
                 src={coverUrl}
                 className="img-fluid rounded shadow-xs novel-cover-img"
                 alt={book.title}
                 loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = '/assets/cover_placeholder.svg';
-                }}
               />
             </div>
             <div className="mt-2 text-center">
@@ -58,7 +55,18 @@ export default function BookCard({ book, onOpenDetail }) {
                   </span>
                 </div>
 
-                <h6 className="card-title fw-bold text-dark mb-1 text-truncate" title={book.title}>
+                <h6
+                  className="card-title fw-bold text-dark mb-1"
+                  title={book.title}
+                  style={{
+                    fontSize: '14px',
+                    lineHeight: '1.4',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
                   {book.title}
                 </h6>
 
