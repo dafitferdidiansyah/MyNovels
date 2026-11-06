@@ -55,6 +55,14 @@ class ReaderApp(models.Model):
 
 
 class EpubBook(models.Model):
+    def save(self, *args, **kwargs):
+        # Auto‑populate title from uploaded file name if missing or placeholder
+        if self.epub_file and (not self.title or self.title in ["New Book", "Unknown"]):
+            stem = Path(self.epub_file.name).stem
+            if " - " in stem:
+                stem = stem.rsplit(" - ", 1)[0].strip()
+            self.title = stem
+        super().save(*args, **kwargs)
     """Metadata and local path tracking for an EPUB file."""
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=500, db_index=True)
