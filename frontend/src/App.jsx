@@ -7,6 +7,7 @@ import BookModal from './components/BookModal';
 import ScanModal from './components/ScanModal';
 import Toast from './components/Toast';
 import MobileBottomNav from './components/MobileBottomNav';
+import NovelFinder from './components/NovelFinder';
 import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps } from './api';
 
 export default function App() {
@@ -107,9 +108,17 @@ export default function App() {
     }
     setError(null);
     try {
+      // Parse advanced search tokens (e.g., "genre:fantasy")
+      let search = activeSearch;
+      let extraGenres = '';
+      const genreMatch = activeSearch.match(/genre:([\w-]+)/i);
+      if (genreMatch) {
+        extraGenres = genreMatch[1];
+        search = activeSearch.replace(genreMatch[0], '').trim();
+      }
       const data = await fetchBooks({
-        search: activeSearch,
-        genres: includedGenres,
+        search: search,
+        genres: includedGenres ? (includedGenres + (extraGenres ? ',' + extraGenres : '')) : extraGenres,
         exclude_genres: excludedGenres,
         status: selectedStatuses.join(','),
         language: selectedLangs.join(','),
