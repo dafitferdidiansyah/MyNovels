@@ -34,7 +34,7 @@ start.bat
 cd backend
 .venv\Scripts\activate
 # Pindai folder epub (misal folder Downloads)
-python manage.py scan_epubs "C:\Users\Dafit Fernandus\Downloads"
+python manage.py scan_epubs "C:\Users\<User_Name>\Downloads"
 # Jalankan server
 python manage.py runserver 0.0.0.0:8000
 ```
