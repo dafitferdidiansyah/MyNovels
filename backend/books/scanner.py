@@ -1,18 +1,5 @@
 import os
-import zipfile
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from django.core.files.base import ContentFile
-from .models import EpubBook, Genre
-
-DC_NS = {
-    "dc": "http://purl.org/dc/elements/1.1/",
-    "opf": "http://www.idpf.org/2007/opf",
-    "container": "urn:oasis:names:tc:opendocument:xmlns:container",
-}
-
-
-import os
+import posixpath
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -26,6 +13,16 @@ DC_NS = {
     "opf": "http://www.idpf.org/2007/opf",
     "container": "urn:oasis:names:tc:opendocument:xmlns:container",
 }
+
+
+def _zip_resolve(opf_dir: str, href: str) -> str:
+    """Resolve a relative href against the OPF directory using POSIX path rules.
+    EPUB zip entries always use forward slashes — os.path.normpath breaks on Windows."""
+    joined = posixpath.normpath(posixpath.join(opf_dir, href))
+    # Remove leading ./ if any
+    if joined.startswith("./"):
+        joined = joined[2:]
+    return joined
 
 
 def clean_html_summary(raw_html: str) -> str:
@@ -87,7 +84,7 @@ def parse_epub(epub_path: str) -> dict:
         # 2. Parse OPF file
         opf_data = zf.read(rootfile_path)
         tree = ET.fromstring(opf_data)
-        opf_dir = os.path.dirname(rootfile_path)
+        opf_dir = posixpath.dirname(rootfile_path)
 
         metadata = tree.find("opf:metadata", DC_NS)
         if metadata is None:
@@ -245,11 +242,11 @@ def parse_epub(epub_path: str) -> dict:
                 # Chapter heuristic: xhtml / html docs
                 if "html" in media_type.lower() or href.lower().endswith((".xhtml", ".html", ".htm")):
                     if any(k in low_id or k in low_href for k in ["titlepage", "title_page", "intro", "summary"]):
-                        titlepage_path = os.path.normpath(os.path.join(opf_dir, href)).replace("\\", "/")
+                        titlepage_path = _zip_resolve(opf_dir, href)
                     elif not any(k in low_id or k in low_href for k in ["cover", "toc", "nav"]):
                         chapter_count += 1
                         if not first_ch_path:
-                            first_ch_path = os.path.normpath(os.path.join(opf_dir, href)).replace("\\", "/")
+                            first_ch_path = _zip_resolve(opf_dir, href)
 
                 # Cover candidate matching
                 if not cover_href:
@@ -296,15 +293,17 @@ def parse_epub(epub_path: str) -> dict:
         cover_bytes = None
         cover_filename = None
         if cover_href:
-            rel_cover = os.path.normpath(os.path.join(opf_dir, cover_href)).replace("\\", "/")
+            rel_cover = _zip_resolve(opf_dir, cover_href)
             try:
                 cover_bytes = zf.read(rel_cover)
-                cover_filename = os.path.basename(rel_cover)
+                cover_filename = posixpath.basename(rel_cover)
             except KeyError:
+                # Fuzzy fallback: match by basename across all zip entries
+                target_base = posixpath.basename(cover_href).lower()
                 for name in zf.namelist():
-                    if name.endswith(os.path.basename(cover_href)):
+                    if posixpath.basename(name).lower() == target_base:
                         cover_bytes = zf.read(name)
-                        cover_filename = os.path.basename(name)
+                        cover_filename = posixpath.basename(name)
                         break
 
         # If still no cover, check any image in zip
@@ -312,7 +311,7 @@ def parse_epub(epub_path: str) -> dict:
             for name in zf.namelist():
                 if name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")) and not name.lower().endswith(".svg"):
                     cover_bytes = zf.read(name)
-                    cover_filename = os.path.basename(name)
+                    cover_filename = posixpath.basename(name)
                     break
 
         return {
