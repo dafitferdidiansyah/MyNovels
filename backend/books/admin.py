@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from django.contrib import admin
 from django.core.files.base import ContentFile
 from .models import EpubBook, Genre, ReaderApp
@@ -64,7 +65,6 @@ class EpubBookAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         # Pre-fill title from filename before save if title is empty or default
         if obj.epub_file and (not obj.title or obj.title == "New Book"):
-            from pathlib import Path
             stem_name = Path(obj.epub_file.name).stem
             if " - " in stem_name:
                 obj.title = stem_name.rsplit(" - ", 1)[0].strip()
@@ -130,7 +130,6 @@ class EpubBookAdmin(admin.ModelAdmin):
     def reparse_selected_epubs(self, request, queryset):
         success = 0
         failed = 0
-        from pathlib import Path
         for obj in queryset:
             target_path = None
             if obj.epub_file:
