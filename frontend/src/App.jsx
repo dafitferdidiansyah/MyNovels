@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
 import BookCard from './components/BookCard';
 import SkeletonCard from './components/SkeletonCard';
 import CoverImage from './components/CoverImage';
 import BookModal from './components/BookModal';
 import ScanModal from './components/ScanModal';
+import Toast from './components/Toast';
+import MobileBottomNav from './components/MobileBottomNav';
 import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps } from './api';
 
 export default function App() {
@@ -13,7 +15,38 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [readerApps, setReaderApps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.dataset.theme = 'dark';
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.dataset.theme = 'light';
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
+  // Toast Notifications State
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   // Search & Basic Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +56,7 @@ export default function App() {
   const [ordering, setOrdering] = useState('-created_at');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   // WTR-Lab Authentic Tri-State Multi-Select for Genres:
   // state 0: Neutral (off), 1: Include (+), 2: Exclude (-)
@@ -36,7 +70,6 @@ export default function App() {
   const [isScanOpen, setIsScanOpen] = useState(false);
 
   const PAGE_SIZE = 20;
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
 
   // Metadata
   const loadMeta = useCallback(async () => {
@@ -65,9 +98,13 @@ export default function App() {
     .map(([slug]) => slug)
     .join(',');
 
-  // Load books with WTR-Lab query
-  const loadBooks = useCallback(async () => {
-    setLoading(true);
+  // Load books with WTR-Lab query (Infinite Scroll support)
+  const loadBooks = useCallback(async (targetPage = 1, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const data = await fetchBooks({
@@ -77,29 +114,66 @@ export default function App() {
         status: selectedStatuses.join(','),
         language: selectedLangs.join(','),
         ordering: ordering,
-        page: page,
+        page: targetPage,
       });
-      setBooks(data.results || []);
-      setTotalCount(data.count || 0);
+      const results = data.results || [];
+      const count = data.count || 0;
+      setTotalCount(count);
+
+      if (append) {
+        setBooks((prev) => [...prev, ...results]);
+      } else {
+        setBooks(results);
+      }
+
+      setHasNextPage(targetPage * PAGE_SIZE < count);
     } catch (err) {
       console.warn('Failed to load books:', err);
       setError(err.message || 'Failed to connect to backend server. Please ensure backend is running.');
-      setBooks([]);
-      setTotalCount(0);
+      if (!append) {
+        setBooks([]);
+        setTotalCount(0);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [activeSearch, includedGenres, excludedGenres, selectedStatuses, selectedLangs, ordering, page]);
+  }, [activeSearch, includedGenres, excludedGenres, selectedStatuses, selectedLangs, ordering]);
 
   useEffect(() => {
-    loadBooks();
+    setPage(1);
+    loadBooks(1, false);
   }, [loadBooks]);
+
+  // Infinite Scroll Intersection Observer
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasNextPage && !loading && !loadingMore) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          loadBooks(nextPage, true);
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [hasNextPage, loading, loadingMore, page, loadBooks]);
 
   // Debounced search
   useEffect(() => {
     const handler = setTimeout(() => {
       setActiveSearch(searchQuery);
-      setPage(1);
     }, 350);
     return () => clearTimeout(handler);
   }, [searchQuery]);
@@ -107,7 +181,6 @@ export default function App() {
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     setActiveSearch(searchQuery);
-    setPage(1);
   };
 
   // Tri-State cycle: Neutral (0) -> Include (1) -> Exclude (2) -> Neutral (0)
@@ -154,15 +227,21 @@ export default function App() {
 
   const carouselBooks = books.slice(0, 6);
 
+  const handleDownloadClick = (book) => {
+    showToast(`Downloading "${book.title.slice(0, 30)}..." (${book.file_size_mb} MB)`);
+  };
+
   return (
     <div className="d-flex flex-column min-vh-100">
-      {/* English Navbar */}
+      {/* Navbar */}
       <Navbar
         onOpenScan={() => setIsScanOpen(true)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onSearchSubmit={handleSearchSubmit}
         readerApps={readerApps}
+        darkMode={darkMode}
+        onToggleDark={toggleDarkMode}
       />
 
       <main className="container-fluid px-3 px-md-5 my-4 flex-grow-1">
@@ -170,11 +249,11 @@ export default function App() {
         {carouselBooks.length > 0 && activeFilterCount === 0 && (
           <div className="row justify-content-center mb-4">
             <div className="col-12 col-xl-10">
-              <div className="p-3 bg-white rounded-3 border shadow-xs">
+              <div className="p-3 rounded-3 border shadow-xs" style={{ backgroundColor: 'var(--card-bg)' }}>
                 <div className="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                   <div className="d-flex align-items-center gap-2">
                     <span className="badge bg-dark rounded-pill px-2 py-1">Top</span>
-                    <h6 className="fw-bold mb-0 text-dark">Featured Books</h6>
+                    <h6 className="fw-bold mb-0">Featured Books</h6>
                   </div>
                   <span className="text-muted small" style={{ fontSize: '11px' }}>
                     Scroll to explore popular titles
@@ -194,7 +273,7 @@ export default function App() {
                         className="carousel-cover-img"
                       />
                       <p
-                        className="small fw-medium mt-2 mb-0 text-dark text-start"
+                        className="small fw-medium mt-2 mb-0 text-start"
                         style={{
                           fontSize: '12px',
                           lineHeight: '1.3',
@@ -222,11 +301,11 @@ export default function App() {
         {/* WTR-Lab Novel Finder Bar with Tri-State Multi-Select */}
         <div className="row justify-content-center mb-4">
           <div className="col-12 col-xl-10">
-            <div className="card border rounded-3 p-3 bg-white shadow-xs">
+            <div className="card border rounded-3 p-3 shadow-xs" style={{ backgroundColor: 'var(--card-bg)' }}>
               {/* Header */}
               <div className="d-flex align-items-center justify-content-between">
                 <div className="d-flex align-items-center gap-2">
-                  <span className="fw-bold text-dark fs-6">Novel Finder</span>
+                  <span className="fw-bold fs-6">Novel Finder</span>
                   {activeFilterCount > 0 && (
                     <span className="badge bg-dark rounded-pill px-2 py-1" style={{ fontSize: '10px' }}>
                       {activeFilterCount} Active
@@ -259,7 +338,7 @@ export default function App() {
                 <div className="col-12 col-md-5 d-flex align-items-center gap-2">
                   <span className="text-muted small fw-medium" style={{ fontSize: '12px' }}>Order:</span>
                   <select
-                    className="form-select form-select-sm border-0 bg-light rounded-pill px-3 fw-medium"
+                    className="form-select form-select-sm rounded-pill px-3 fw-medium"
                     style={{ fontSize: '12px', width: 'auto' }}
                     value={ordering}
                     onChange={(e) => {
@@ -374,24 +453,24 @@ export default function App() {
           <div className="col-12 col-xl-10">
             <div className="d-flex align-items-center justify-content-between mb-3">
               <div>
-                <h5 className="fw-bold text-dark mb-0">EPUB Novel Library</h5>
+                <h5 className="fw-bold mb-0">EPUB Novel Library</h5>
                 <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
-                  Total {totalCount} books ready for offline reading
+                  Showing {books.length} of {totalCount} books ready for offline reading
                 </p>
               </div>
             </div>
 
             {error ? (
-              <div className="card text-center p-5 border rounded-3 bg-white shadow-xs">
+              <div className="card text-center p-5 border rounded-3 shadow-xs" style={{ backgroundColor: 'var(--card-bg)' }}>
                 <div className="mb-3">
                   <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill" style={{ fontSize: '12px' }}>
                     Connection Error
                   </span>
                 </div>
-                <h6 className="fw-bold text-dark mb-2">Unable to Load Novel Archives</h6>
+                <h6 className="fw-bold mb-2">Unable to Load Novel Archives</h6>
                 <p className="text-muted small mb-3">{error}</p>
                 <div>
-                  <button className="btn btn-dark btn-sm rounded-pill px-4" onClick={loadBooks}>
+                  <button className="btn btn-dark btn-sm rounded-pill px-4" onClick={() => loadBooks(1, false)}>
                     Retry Connection
                   </button>
                 </div>
@@ -403,18 +482,35 @@ export default function App() {
                 ))}
               </div>
             ) : books.length > 0 ? (
-              <div className="row">
-                {books.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    onOpenDetail={(b) => setSelectedBook(b)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="row">
+                  {books.map((book) => (
+                    <BookCard
+                      key={book.id}
+                      book={book}
+                      onOpenDetail={(b) => setSelectedBook(b)}
+                      onDownloadClick={handleDownloadClick}
+                    />
+                  ))}
+                </div>
+
+                {/* Infinite Scroll Sentinel */}
+                <div ref={sentinelRef} className="py-4 text-center">
+                  {loadingMore && (
+                    <div className="spinner-border spinner-border-sm text-secondary" role="status">
+                      <span className="visually-hidden">Loading more...</span>
+                    </div>
+                  )}
+                  {!hasNextPage && books.length > 0 && (
+                    <span className="text-muted small" style={{ fontSize: '11px' }}>
+                      &mdash; End of novel archives &mdash;
+                    </span>
+                  )}
+                </div>
+              </>
             ) : (
-              <div className="card text-center p-5 border rounded-3 bg-white shadow-xs">
-                <h6 className="fw-bold text-dark">No Matching Archives Found</h6>
+              <div className="card text-center p-5 border rounded-3 shadow-xs" style={{ backgroundColor: 'var(--card-bg)' }}>
+                <h6 className="fw-bold">No Matching Archives Found</h6>
                 <p className="text-muted small mb-3">Try adjusting your multi-select criteria or excluded tags.</p>
                 <div>
                   <button className="btn btn-dark btn-sm rounded-pill px-4" onClick={resetAllFilters}>
@@ -423,41 +519,12 @@ export default function App() {
                 </div>
               </div>
             )}
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <nav aria-label="Page navigation" className="mt-4">
-                <ul className="pagination pagination-sm justify-content-center gap-1">
-                  <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                    <button
-                      className="page-link rounded-pill border-0 px-3 text-dark bg-white shadow-xs"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      &larr; Prev
-                    </button>
-                  </li>
-                  <li className="page-item disabled">
-                    <span className="page-link border-0 text-muted bg-transparent">
-                      {page} / {totalPages}
-                    </span>
-                  </li>
-                  <li className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
-                    <button
-                      className="page-link rounded-pill border-0 px-3 text-dark bg-white shadow-xs"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    >
-                      Next &rarr;
-                    </button>
-                  </li>
-                </ul>
-              </nav>
-            )}
           </div>
         </div>
       </main>
 
-      {/* Footer with clean credits */}
-      <footer className="footer mt-auto py-2 bg-white border-top text-center text-muted" style={{ fontSize: '11px' }}>
+      {/* Footer */}
+      <footer className="footer mt-auto py-2 border-top text-center text-muted" style={{ fontSize: '11px', backgroundColor: 'var(--footer-bg)' }}>
         <div className="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 py-1">
           <span>Read This &copy; 2026 &bull; Direct EPUB Downloader</span>
           <div className="d-flex flex-wrap align-items-center justify-content-center gap-2">
@@ -470,8 +537,8 @@ export default function App() {
                     href={app.download_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="badge bg-light text-dark border text-decoration-none py-1 px-2"
-                    style={{ fontSize: '10px' }}
+                    className="badge text-secondary border text-decoration-none py-1 px-2"
+                    style={{ fontSize: '10px', backgroundColor: 'var(--input-bg)' }}
                     title={`Download ${app.name} APK`}
                   >
                     📱 {app.name}
@@ -486,7 +553,7 @@ export default function App() {
                 href="https://github.com/taufiq-azr"
                 target="_blank"
                 rel="noreferrer"
-                className="text-decoration-none fw-semibold text-dark"
+                className="text-decoration-none fw-semibold"
               >
                 @taufiq-azr
               </a>
@@ -500,6 +567,7 @@ export default function App() {
         <BookModal
           book={selectedBook}
           onClose={() => setSelectedBook(null)}
+          onDownloadClick={handleDownloadClick}
         />
       )}
 
@@ -509,7 +577,19 @@ export default function App() {
         onClose={() => setIsScanOpen(false)}
         onScanSuccess={() => {
           loadMeta();
-          loadBooks();
+          loadBooks(1, false);
+        }}
+      />
+
+      {/* Toast Notifications */}
+      <Toast toasts={toasts} onRemove={removeToast} />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        darkMode={darkMode}
+        onToggleDark={toggleDarkMode}
+        onOpenSearch={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
     </div>
