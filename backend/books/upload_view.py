@@ -37,6 +37,9 @@ class EpubUploadView(APIView):
         book = EpubBook()
         book.epub_file = epub_file
         book.title = title
+        orig_title = request.data.get("original_title", "").strip()
+        if orig_title:
+            book.original_title = orig_title
         book.save()  # store file, obtain PK
 
         # Path to saved file on disk
