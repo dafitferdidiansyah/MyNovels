@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils.text import slugify
 
@@ -15,7 +16,15 @@ class Genre(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name) or "general"
+            base_slug = slugify(self.name)
+            if not base_slug:
+                base_slug = f"tag-{uuid.uuid4().hex[:8]}"
+            candidate = base_slug
+            idx = 1
+            while Genre.objects.filter(slug=candidate).exclude(pk=self.pk).exists():
+                candidate = f"{base_slug}-{idx}"
+                idx += 1
+            self.slug = candidate
         super().save(*args, **kwargs)
 
 
