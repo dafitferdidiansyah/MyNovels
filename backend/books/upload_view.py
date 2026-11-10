@@ -1,0 +1,97 @@
+"""EPUB upload endpoint.
+POST /api/upload/
+Fields: epub_file (required), title (optional).
+If title missing, derived from filename (strip ' - author' part).
+Parses metadata via scanner.parse_epub, populates EpubBook, genres, cover.
+"""
+import os
+from pathlib import Path
+
+from django.core.files.base import ContentFile
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import EpubBook, Genre
+from .scanner import parse_epub
+
+
+class EpubUploadView(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        epub_file = request.FILES.get("epub_file")
+        if not epub_file:
+            return Response({"error": "epub_file is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Optional title – fallback to filename stem (strip author part after ' - ')
+        title = request.data.get("title", "").strip()
+        stem = Path(epub_file.name).stem
+        if " - " in stem:
+            stem = stem.rsplit(" - ", 1)[0].strip()
+        if not title:
+            title = stem
+
+        # Create model instance with uploaded file
+        book = EpubBook()
+        book.epub_file = epub_file
+        book.title = title
+        book.save()  # store file, obtain PK
+
+        # Path to saved file on disk
+        try:
+            epub_path = book.epub_file.path
+        except Exception:
+            epub_path = None
+
+        if epub_path and os.path.exists(epub_path):
+            try:
+                meta = parse_epub(epub_path)
+                if not book.original_title and meta.get("original_title"):
+                    book.original_title = meta["original_title"]
+                if not book.author or book.author == "Unknown":
+                    book.author = meta.get("author") or "Unknown"
+                if not book.description and meta.get("description"):
+                    book.description = meta["description"]
+                if not book.source_url and meta.get("source_url"):
+                    book.source_url = meta["source_url"]
+                if not book.identifier and meta.get("identifier"):
+                    book.identifier = meta["identifier"]
+                if not book.language or book.language == "en":
+                    book.language = meta.get("language", "en")
+
+                book.total_chapters = meta.get("total_chapters", 1)
+                book.total_characters = meta.get("total_characters", 0)
+                book.file_size_bytes = meta.get("file_size", epub_file.size if epub_file else 0)
+                book.file_path = epub_path
+
+                # Cover handling
+                if not book.cover_image and meta.get("cover_bytes"):
+                    cover_name = f"cover_{book.id}_{meta.get('cover_filename', 'cover.jpg')}"
+                    book.cover_image.save(
+                        cover_name, ContentFile(meta["cover_bytes"]), save=False
+                    )
+
+                book.save()
+
+                # Genres association
+                for g_name in meta.get("genres", []):
+                    g, _ = Genre.objects.get_or_create(name=g_name)
+                    book.genres.add(g)
+            except Exception as e:
+                return Response(
+                    {"id": book.id, "title": book.title, "warning": f"Metadata parse failed: {e}"},
+                    status=status.HTTP_201_CREATED,
+                )
+
+        return Response(
+            {
+                "id": book.id,
+                "title": book.title,
+                "author": book.author,
+                "language": book.language,
+                "total_chapters": book.total_chapters,
+            },
+            status=status.HTTP_201_CREATED,
+        )
