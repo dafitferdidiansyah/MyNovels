@@ -40,6 +40,9 @@ class EpubUploadView(APIView):
         orig_title = request.data.get("original_title", "").strip()
         if orig_title:
             book.original_title = orig_title
+        lang_param = request.data.get("language", "").strip()
+        if lang_param:
+            book.language = lang_param
         book.save()  # store file, obtain PK
 
         # Path to saved file on disk
@@ -61,7 +64,7 @@ class EpubUploadView(APIView):
                     book.source_url = meta["source_url"]
                 if not book.identifier and meta.get("identifier"):
                     book.identifier = meta["identifier"]
-                if not book.language or book.language == "en":
+                if not book.language:
                     book.language = meta.get("language", "en")
 
                 book.total_chapters = meta.get("total_chapters", 1)
