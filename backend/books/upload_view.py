@@ -72,14 +72,15 @@ class EpubUploadView(APIView):
                 book.file_size_bytes = meta.get("file_size", epub_file.size if epub_file else 0)
                 book.file_path = epub_path
 
+                book.save()
+
                 # Cover handling
                 if not book.cover_image and meta.get("cover_bytes"):
                     cover_name = f"cover_{book.id}_{meta.get('cover_filename', 'cover.jpg')}"
                     book.cover_image.save(
                         cover_name, ContentFile(meta["cover_bytes"]), save=False
                     )
-
-                book.save()
+                    book.save(update_fields=["cover_image"])
 
                 # Genres association
                 for g_name in meta.get("genres", []):

@@ -307,37 +307,57 @@ export default function App() {
           </div>
         )}
 
-        {/* WTR-Lab Novel Finder Bar with Tri-State Multi-Select */}
+        {/* WTR-Lab Novel Finder Bar with Tri-State Multi-Select & Integrated Search */}
         <div className="row justify-content-center mb-4">
           <div className="col-12 col-xl-10">
             <div className="card border rounded-3 p-3 shadow-xs" style={{ backgroundColor: 'var(--card-bg)' }}>
-              {/* Header */}
-              <div className="d-flex align-items-center justify-content-between">
-                <div className="d-flex align-items-center gap-2">
-                  <span className="fw-bold fs-6">Novel Finder</span>
+              {/* Integrated Search Box & Quick Controls */}
+              <div className="row g-2 align-items-center mb-2 pb-2 border-bottom">
+                <div className="col-12 col-md-7">
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text border-end-0 text-muted" style={{ backgroundColor: 'var(--input-bg)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </span>
+                    <input
+                      className="form-control form-control-sm border-start-0"
+                      type="search"
+                      placeholder="Search title, raw Japanese, author..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-5 d-flex align-items-center justify-content-md-end gap-2">
                   {activeFilterCount > 0 && (
                     <span className="badge bg-dark rounded-pill px-2 py-1" style={{ fontSize: '10px' }}>
                       {activeFilterCount} Active
                     </span>
                   )}
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
                   {activeFilterCount > 0 && (
                     <button
                       className="btn btn-sm btn-link text-danger text-decoration-none p-0 small"
                       style={{ fontSize: '12px' }}
                       onClick={resetAllFilters}
                     >
-                      Reset All
+                      Reset
                     </button>
                   )}
                   <button
-                    className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1"
+                    className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-medium"
                     style={{ fontSize: '12px' }}
                     onClick={() => setFilterExpanded(!filterExpanded)}
                   >
-                    {filterExpanded ? 'Hide Filters ▲' : 'Advanced Filters ▼'}
+                    {filterExpanded ? 'Hide Filters ▲' : 'Filters & Tags ▼'}
                   </button>
                 </div>
               </div>

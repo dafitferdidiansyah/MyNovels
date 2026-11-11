@@ -17,25 +17,8 @@ export default function Navbar({ onOpenScan, searchQuery, onSearchChange, onSear
             </span>
           </a>
 
-          {/* Quick Search in English */}
-          <form className="d-flex mx-auto col-12 col-md-5 my-2 my-md-0" onSubmit={onSearchSubmit}>
-            <div className="input-group input-group-sm w-100">
-              <span className="input-group-text border-end-0 text-muted" style={{ backgroundColor: 'var(--input-bg)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              </span>
-              <input
-                className="form-control form-control-sm border-start-0"
-                type="search"
-                placeholder="Search novel title, raw original, or author..."
-                aria-label="Search"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-          </form>
-
           {/* Right Actions: Reader Apps & Dark Mode Toggle */}
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2 ms-auto">
             {readerApps && readerApps.length > 0 && (
               <div className="dropdown">
                 <button

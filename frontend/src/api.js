@@ -76,9 +76,11 @@ export const getDownloadUrl = (id) => {
 };
 
 export const getAdminAddUrl = () => {
-  return `${BASE_URL}/admin/books/epubbook/add/`;
+  const adminBase = import.meta.env.VITE_ADMIN_URL || 'http://127.0.0.1:8000';
+  return `${adminBase.replace(/\/$/, '')}/admin/books/epubbook/add/`;
 };
 
 export const getAdminUrl = () => {
-  return `${BASE_URL}/admin/`;
+  const adminBase = import.meta.env.VITE_ADMIN_URL || 'http://127.0.0.1:8000';
+  return `${adminBase.replace(/\/$/, '')}/admin/`;
 };
