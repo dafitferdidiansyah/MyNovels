@@ -33,6 +33,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "https://*.ngrok-free.dev",
     "https://*.workers.dev",
+    "https://readthis.web.id",
+    "https://*.readthis.web.id",
 ]
 
 
