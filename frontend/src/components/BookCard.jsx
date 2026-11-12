@@ -39,6 +39,8 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
                 src={coverUrl}
                 className="img-fluid rounded shadow-xs novel-cover-img"
                 alt={book.title}
+                title={book.title}
+                author={book.author}
                 loading="lazy"
               />
             </div>

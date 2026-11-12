@@ -279,6 +279,8 @@ export default function App() {
                       <CoverImage
                         src={b.cover || ''}
                         alt={b.title}
+                        title={b.title}
+                        author={b.author}
                         className="carousel-cover-img"
                       />
                       <p

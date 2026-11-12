@@ -85,6 +85,8 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                       src={coverUrl}
                       className="novel-cover-img"
                       alt={book.title}
+                      title={book.title}
+                      author={book.author}
                     />
                   </div>
                   <div className="mt-2">
