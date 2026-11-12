@@ -250,6 +250,9 @@ def parse_epub(epub_path: str) -> dict:
             for s in metadata.findall("dc:subject", DC_NS) + metadata.findall("{http://purl.org/dc/elements/1.1/}subject"):
                 if s.text and s.text.strip():
                     raw_tag = s.text.strip()
+                    # Filter out long paragraphs or junk mistakenly stored as dc:subject
+                    if len(raw_tag) > 35 or "\n" in raw_tag:
+                        continue
                     # Check mapping
                     mapped_tag = TAG_TRANSLATION_MAP.get(raw_tag)
                     if not mapped_tag:

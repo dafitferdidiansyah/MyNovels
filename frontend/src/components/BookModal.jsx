@@ -54,7 +54,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                 className={`nav-link ${activeTab === 'info' ? 'active fw-bold' : ''}`}
                 onClick={() => setActiveTab('info')}
               >
-                Info
+                Overview
               </button>
             </li>
             <li className="nav-item">
@@ -99,7 +99,8 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                 {/* Novel Information */}
                 <div className="col-8 d-flex flex-column justify-content-between">
                   <div>
-                    <div className="d-flex align-items-center gap-1 mb-1 flex-wrap">
+                    {/* Status & Chapters Row */}
+                    <div className="d-flex align-items-center gap-1 mb-2 flex-wrap">
                       <span
                         className={`badge ${
                           rawStatus === 'COMPLETED'
@@ -118,43 +119,43 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                       </span>
                     </div>
 
-                    <h6 className="fw-bold mb-1" style={{ fontSize: '14.5px', lineHeight: '1.3' }}>
+                    {/* Main Title */}
+                    <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '14px', lineHeight: '1.35' }}>
                       {book.title}
                     </h6>
 
+                    {/* Original Japanese Title (kecil & rapi) */}
                     {book.original_title && (
-                      <p className="text-muted small fst-italic mb-1 text-truncate" style={{ fontSize: '11px' }} title={book.original_title}>
+                      <p className="text-muted small fst-italic mb-2" style={{ fontSize: '11px', lineHeight: '1.3' }}>
                         {book.original_title}
                       </p>
                     )}
 
-                    <p className="text-secondary mb-2" style={{ fontSize: '11.5px' }}>
-                      Author: <span className="fw-semibold">{book.author || 'Anonymous'}</span>
-                    </p>
-
-                    {/* Web Source Link */}
-                    {book.source_url ? (
-                      <div className="mb-2">
+                    {/* Author & Web Source */}
+                    <div className="d-flex align-items-center gap-2 mb-2 flex-wrap" style={{ fontSize: '11.5px' }}>
+                      <span className="text-secondary">
+                        Author: <b className="text-dark">{book.author || 'Anonymous'}</b>
+                      </span>
+                      {book.source_url && (
                         <a
                           href={book.source_url}
                           target="_blank"
                           rel="noreferrer"
                           className="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0 d-inline-flex align-items-center gap-1 text-decoration-none"
-                          style={{ fontSize: '10.5px' }}
+                          style={{ fontSize: '10px' }}
                         >
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                           Web Source
                         </a>
-                      </div>
-                    ) : (
-                      <div className="text-muted mb-2" style={{ fontSize: '10.5px' }}>
-                        Source: <i>Digital Archive</i>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
-                    {/* Tags */}
+                    {/* Tags (Filtered & Clean) */}
                     <div className="d-flex flex-wrap gap-1 mb-2">
-                      {genres.map((g, idx) => (
+                      {genres.filter(g => {
+                        const name = typeof g === 'object' ? g.name : String(g);
+                        return name.length <= 30 && !name.includes('\n');
+                      }).map((g, idx) => (
                         <span key={idx} className="badge bg-light text-secondary border fw-normal" style={{ fontSize: '9.5px' }}>
                           {translateTag(g)}
                         </span>
