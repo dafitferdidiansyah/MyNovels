@@ -1,5 +1,9 @@
 import uuid
+import os
+from pathlib import Path
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.text import slugify
 
 
@@ -136,3 +140,31 @@ class EpubBook(models.Model):
         if self.total_characters >= 1000:
             return f"{round(self.total_characters / 1000, 1)}K"
         return str(self.total_characters)
+
+
+@receiver(post_delete, sender=EpubBook)
+def auto_delete_book_files(sender, instance, **kwargs):
+    """Clean up actual EPUB and cover files on disk when a book is deleted from DB."""
+    # Delete uploaded .epub file
+    if instance.epub_file:
+        try:
+            if instance.epub_file.storage.exists(instance.epub_file.name):
+                instance.epub_file.delete(save=False)
+        except Exception:
+            pass
+
+    # Delete cover image
+    if instance.cover_image:
+        try:
+            if instance.cover_image.storage.exists(instance.cover_image.name):
+                instance.cover_image.delete(save=False)
+        except Exception:
+            pass
+
+    # Delete local scanned file_path if stored
+    if instance.file_path and os.path.isfile(instance.file_path):
+        try:
+            os.remove(instance.file_path)
+        except Exception:
+            pass
+

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Layers, SortAsc, Filter, X, SlidersHorizontal, Check } from 'lucide-react';
+import { translateTag } from '../api';
 
 export default function Sidebar({
   isOpen,
@@ -162,7 +163,7 @@ export default function Sidebar({
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
                 }`}
               >
-                <span className="truncate text-left capitalize">{g.name}</span>
+                <span className="truncate text-left capitalize">{translateTag(g.name)}</span>
                 <span className="text-[11px] opacity-75 ml-1">{g.books_count}</span>
               </button>
             ))}

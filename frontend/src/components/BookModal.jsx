@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getDownloadUrl } from '../api';
+import { getDownloadUrl, translateTag } from '../api';
 import CoverImage from './CoverImage';
 import { getReadingLength } from './BookCard';
 
@@ -156,7 +156,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                     <div className="d-flex flex-wrap gap-1 mb-2">
                       {genres.map((g, idx) => (
                         <span key={idx} className="badge bg-light text-secondary border fw-normal" style={{ fontSize: '9.5px' }}>
-                          {typeof g === 'object' ? g.name : g}
+                          {translateTag(g)}
                         </span>
                       ))}
                     </div>
@@ -197,7 +197,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                   </span>
                 </div>
                 <p className="text-secondary small mb-3">
-                  Optimized for Moon+ Reader, Kindle, Apple Books, and e-readers. Total downloads: <b>{book.download_count}x</b>
+                  Universal EPUB format compatible with all major e-readers, tablets, and mobile reading apps. Total downloads: <b>{book.download_count}x</b>
                 </p>
                 <button
                   type="button"

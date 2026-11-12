@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDownloadUrl } from '../api';
+import { getDownloadUrl, translateTag } from '../api';
 import CoverImage from './CoverImage';
 
 export function getReadingLength(chapters) {
@@ -13,7 +13,7 @@ export function getReadingLength(chapters) {
 export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
   const coverUrl = book.cover || '';
   const genres = Array.isArray(book.genres) ? book.genres : [];
-  const primaryGenre = genres[0] || 'Web Novel';
+  const primaryGenre = translateTag(genres[0]) || 'Web Novel';
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);
 
@@ -123,7 +123,7 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
                     overflow: 'hidden',
                   }}
                 >
-                  {book.description || 'Offline machine-translated (MTL) ePub archive ready for direct download.'}
+                  {book.description || 'Digital web novel archive ready for direct download.'}
                 </p>
               </div>
 

@@ -7,6 +7,71 @@ const defaultHeaders = {
   'ngrok-skip-browser-warning': 'true',
 };
 
+// Translation lookup map for Japanese tags
+export const TAG_MAP = {
+  '異世界': 'Isekai',
+  '異世界転生': 'Isekai Reincarnation',
+  '異世界転移': 'Isekai Summoning',
+  '転生': 'Reincarnation',
+  '転移': 'Summoning / Transmigration',
+  '主人公最強': 'Overpowered Protagonist',
+  '最強': 'Overpowered',
+  '無双': 'Overpowered',
+  '勘違い': 'Misunderstanding',
+  'チート': 'Cheat Ability',
+  'ファンタジー': 'Fantasy',
+  'ハイファンタジー': 'High Fantasy',
+  'ローファンタジー': 'Urban Fantasy',
+  'SF': 'Sci-Fi',
+  'コメディ': 'Comedy',
+  'ギャグ': 'Comedy',
+  'ラブコメ': 'RomCom',
+  '恋愛': 'Romance',
+  'ざまぁ': 'Revenge',
+  '復讐': 'Revenge',
+  '追放': 'Banished / Exiled',
+  '悪役令嬢': 'Villainess',
+  'TS': 'Gender Bender',
+  '性転換': 'Gender Bender',
+  '女主人公': 'Female Protagonist',
+  '男主人公': 'Male Protagonist',
+  '日常': 'Slice of Life',
+  'ほのぼの': 'Slice of Life',
+  '冒険': 'Adventure',
+  'ダンジョン': 'Dungeon',
+  '魔法': 'Magic',
+  'ステータス': 'Status / LitRPG',
+  'ゲーム': 'LitRPG / Game',
+  'スキル': 'Skills / Progression',
+  '学園': 'School Life',
+  'ハーレム': 'Harem',
+  'スローライフ': 'Slow Life',
+  'ダーク': 'Dark Fantasy',
+  '生産': 'Crafting / Production',
+  '錬金術': 'Alchemy',
+  'もふもふ': 'Fluffy / Cute',
+  'ミリタリー': 'Military',
+  'ネット小説大賞': 'Award Winner',
+  '書籍化': 'Light Novel Adaptation',
+  'アニメ化': 'Anime Adaptation',
+  'コミカライズ': 'Manga Adaptation',
+  '完結済': 'Completed',
+  '連載中': 'Ongoing',
+  'R15': 'Teen 15+',
+  '残酷な描写あり': 'Gore / Violence',
+  'オリジナル': 'Original',
+};
+
+export const translateTag = (tag) => {
+  if (!tag) return '';
+  const str = typeof tag === 'object' ? (tag.name || '') : String(tag);
+  if (TAG_MAP[str]) return TAG_MAP[str];
+  for (const [k, v] of Object.entries(TAG_MAP)) {
+    if (str.includes(k)) return v;
+  }
+  return str;
+};
+
 export const fetchBooks = async (params = {}) => {
   const query = new URLSearchParams();
   if (params.search) query.set('search', params.search);

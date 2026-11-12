@@ -8,7 +8,7 @@ import ScanModal from './components/ScanModal';
 import Toast from './components/Toast';
 import MobileBottomNav from './components/MobileBottomNav';
 import NovelFinder from './components/NovelFinder';
-import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps } from './api';
+import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps, translateTag } from './api';
 
 export default function App() {
   const [books, setBooks] = useState([]);
@@ -465,10 +465,10 @@ export default function App() {
                           key={g.id}
                           className={`tristate-chip text-capitalize ${chipClass}`}
                           onClick={() => cycleGenreState(g.slug)}
-                          title={`${g.name}: ${st === 0 ? 'Click to Include' : st === 1 ? 'Click to Exclude' : 'Click to Reset'}`}
+                          title={`${translateTag(g.name)}: ${st === 0 ? 'Click to Include' : st === 1 ? 'Click to Exclude' : 'Click to Reset'}`}
                         >
-                          {icon}
-                          {g.name}
+                          <span className="me-1 opacity-75">{icon}</span>
+                          {translateTag(g.name)}
                         </span>
                       );
                     })}
