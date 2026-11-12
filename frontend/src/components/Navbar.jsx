@@ -19,16 +19,6 @@ export default function Navbar({ onOpenScan, searchQuery, onSearchChange, onSear
 
           {/* Right Actions: Reader Apps & Dark Mode Toggle */}
           <div className="d-flex align-items-center gap-2 ms-auto">
-            {/* Quick Link to Tailscale Crawler Dashboard */}
-            <a
-              href="http://100.105.78.107:8088/crawler/"
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-medium d-none d-md-inline-flex align-items-center gap-1 shadow-xs"
-              title="Syosetu Crawler & Downloader Dashboard (Tailscale)"
-            >
-              <span>🕷️ Crawler</span>
-            </a>
             {readerApps && readerApps.length > 0 && (
               <div className="dropdown">
                 <button
