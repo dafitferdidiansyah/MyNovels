@@ -172,7 +172,7 @@ export default function Sidebar({
         {/* Read This Info Banner */}
         <div className="mt-8 p-3.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
           <p className="font-bold text-zinc-800 dark:text-zinc-200 mb-1">Read This Hub</p>
-          Metadata novel diparsing langsung dari struktur Dublin Core ePub lokal dengan cover & deskripsi lengkap.
+          Koleksi web novel dan serial terjemahan digital dalam format EPUB berkualitas dengan metadata terverifikasi.
         </div>
       </aside>
     </>

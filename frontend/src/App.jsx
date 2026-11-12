@@ -323,7 +323,7 @@ export default function App() {
                     <input
                       className="form-control form-control-sm border-start-0"
                       type="search"
-                      placeholder="Search title, raw Japanese, author..."
+                      placeholder="Search by title, author, or keywords..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -557,7 +557,7 @@ export default function App() {
       {/* Footer */}
       <footer className="footer mt-auto py-2 border-top text-center text-muted" style={{ fontSize: '11px', backgroundColor: 'var(--footer-bg)' }}>
         <div className="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 py-1">
-          <span>Read This &copy; 2026 &bull; Direct EPUB Downloader</span>
+          <span>Read This &copy; 2026 &bull; Digital Web Novel Library</span>
           <div className="d-flex flex-wrap align-items-center justify-content-center gap-2">
             {readerApps && readerApps.length > 0 && (
               <div className="d-flex align-items-center gap-1">

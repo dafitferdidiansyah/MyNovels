@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
  * Generates an SVG data URI matching the Syosetu / Retro B&W aesthetic
  * with double-border framing, category header, centered title, and author.
  */
-export function generateRetroCoverSvg(title = '', author = '', tag = 'SYOSETU NOVEL ARCHIVE') {
+export function generateRetroCoverSvg(title = '', author = '', tag = 'READ THIS • WEB NOVEL') {
   const cleanTitle = (title || 'UNTITLED NOVEL').trim();
-  const cleanAuthor = (author || 'Unknown').trim();
-  const cleanTag = (tag || 'SYOSETU NOVEL ARCHIVE').toUpperCase();
+  const cleanAuthor = (author || 'Anonymous').trim();
+  const cleanTag = (tag || 'READ THIS • WEB NOVEL').toUpperCase();
 
   // Simple line wrapping for SVG text
   const lines = [];

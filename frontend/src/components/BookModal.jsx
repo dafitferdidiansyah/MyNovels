@@ -91,7 +91,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                   </div>
                   <div className="mt-2">
                     <span className="badge bg-light text-muted border text-uppercase" style={{ fontSize: '9px' }}>
-                      {book.language || 'RAW/MTL'}
+                      {book.language || 'WEB NOVEL'}
                     </span>
                   </div>
                 </div>
@@ -132,23 +132,23 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                       Author: <span className="fw-semibold">{book.author || 'Anonymous'}</span>
                     </p>
 
-                    {/* Raw Source Link */}
+                    {/* Web Source Link */}
                     {book.source_url ? (
                       <div className="mb-2">
                         <a
                           href={book.source_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-outline-primary btn-sm rounded-pill px-2 py-0 d-inline-flex align-items-center gap-1 text-decoration-none"
+                          className="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0 d-inline-flex align-items-center gap-1 text-decoration-none"
                           style={{ fontSize: '10.5px' }}
                         >
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                          Raw Source Web
+                          Web Source
                         </a>
                       </div>
                     ) : (
                       <div className="text-muted mb-2" style={{ fontSize: '10.5px' }}>
-                        Raw Source: <i>Offline Archive</i>
+                        Source: <i>Digital Archive</i>
                       </div>
                     )}
 

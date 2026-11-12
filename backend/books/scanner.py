@@ -96,6 +96,13 @@ def parse_epub(epub_path: str) -> dict:
         title = filename_title
         original_title = ""
         if metadata is not None:
+            # 1. Check explicit original title tag
+            orig_elem = metadata.find("dc:title[@id='original_title']", DC_NS)
+            if orig_elem is None:
+                orig_elem = metadata.find("{http://purl.org/dc/elements/1.1/}title[@id='original_title']")
+            if orig_elem is not None and orig_elem.text:
+                original_title = orig_elem.text.strip()
+
             title_elem = metadata.find("dc:title", DC_NS)
             if title_elem is None:
                 title_elem = metadata.find("{http://purl.org/dc/elements/1.1/}title")
@@ -103,7 +110,7 @@ def parse_epub(epub_path: str) -> dict:
                 dc_title = title_elem.text.strip()
                 if not title or title in ["New Book", "Unknown", stem_name]:
                     title = dc_title
-                else:
+                elif not original_title and dc_title != title:
                     original_title = dc_title
 
         # Creator / Author

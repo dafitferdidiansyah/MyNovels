@@ -46,7 +46,7 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
             </div>
             <div className="mt-2 text-center">
               <span className="badge bg-light text-muted border text-uppercase" style={{ fontSize: '10px' }}>
-                {book.language || 'RAW/MTL'}
+                {book.language || 'WEB NOVEL'}
               </span>
             </div>
           </div>
@@ -102,12 +102,12 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
                       href={book.source_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none rounded-pill px-2 py-0"
+                      className="badge bg-light text-secondary border text-decoration-none rounded-pill px-2 py-0"
                       style={{ fontSize: '9px' }}
-                      title="Open Original Raw Source"
+                      title="Open Web Source"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      RAW ↗
+                      Web ↗
                     </a>
                   )}
                 </div>
