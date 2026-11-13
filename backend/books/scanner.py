@@ -92,8 +92,8 @@ def parse_epub(epub_path: str) -> dict:
         if metadata is None:
             metadata = tree.find("metadata")
 
-        # Title: Filename takes priority, DC metadata is fallback
-        title = filename_title
+        # Title: DC metadata takes priority over filename when available
+        title = ""
         original_title = ""
         if metadata is not None:
             # 1. Check explicit original title tag
@@ -108,10 +108,13 @@ def parse_epub(epub_path: str) -> dict:
                 title_elem = metadata.find("{http://purl.org/dc/elements/1.1/}title")
             if title_elem is not None and title_elem.text:
                 dc_title = title_elem.text.strip()
-                if not title or title in ["New Book", "Unknown", stem_name]:
+                if dc_title and dc_title not in ["New Book", "Unknown"]:
                     title = dc_title
-                elif not original_title and dc_title != title:
+                if not original_title and dc_title != title:
                     original_title = dc_title
+
+        if not title:
+            title = filename_title
 
         # Creator / Author
         author = "Unknown"
@@ -156,6 +159,13 @@ def parse_epub(epub_path: str) -> dict:
                 lang_elem = metadata.find("{http://purl.org/dc/elements/1.1/}language")
             if lang_elem is not None and lang_elem.text:
                 language = lang_elem.text.strip().lower()
+
+        # Filename prefix / tag overrides language
+        stem_lower = stem_name.lower()
+        if stem_lower.startswith("[en]") or "_en" in stem_lower:
+            language = "en"
+        elif stem_lower.startswith("[id]") or "_id" in stem_lower:
+            language = "id"
 
         # If title or filename indicates English translation, override to 'en'
         if "[en]" in (title + " " + stem_name).lower() or "(en)" in (title + " " + stem_name).lower():

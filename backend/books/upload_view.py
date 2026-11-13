@@ -28,10 +28,18 @@ class EpubUploadView(APIView):
         # Optional title – fallback to filename stem (strip author part after ' - ')
         title = request.data.get("title", "").strip()
         stem = Path(epub_file.name).stem
+        orig_title = request.data.get("original_title", "").strip()
+        lang_param = request.data.get("language", "").strip()
+
+        # If title from request matches raw author name or is empty, derive from stem
         if " - " in stem:
-            stem = stem.rsplit(" - ", 1)[0].strip()
+            stem_title = stem.rsplit(" - ", 1)[0].strip()
+        else:
+            stem_title = stem
+        stem_title = re.sub(r"^\[(?:EN|ID|JA)\]\s*", "", stem_title, flags=re.IGNORECASE).strip()
+
         if not title:
-            title = stem
+            title = stem_title
 
         # Create model instance with uploaded file
         book = EpubBook()
@@ -55,11 +63,12 @@ class EpubUploadView(APIView):
         if epub_path and os.path.exists(epub_path):
             try:
                 meta = parse_epub(epub_path)
-                # Prefer rich metadata title if upload title was fallback/stem
+                # Prefer rich metadata title if upload title was fallback/stem or identical to author
                 parsed_title = meta.get("title")
+                author_val = meta.get("author") or ""
                 if parsed_title:
-                    # If request provided title was missing or matched filename stem fallback, use parsed EPUB title
-                    if not request.data.get("title") or title == stem:
+                    # If request provided title was missing, matched stem fallback, or was accidentally author
+                    if not request.data.get("title") or title == stem or title == stem_title or (author_val and title.lower() == author_val.lower()):
                         book.title = parsed_title
                     else:
                         book.title = title
