@@ -329,8 +329,9 @@ def parse_epub(epub_path: str) -> dict:
 
                 # Chapter heuristic: xhtml / html docs
                 if "html" in media_type.lower() or href.lower().endswith((".xhtml", ".html", ".htm")):
-                    if any(k in low_id or k in low_href for k in ["titlepage", "title_page", "intro", "summary"]):
-                        titlepage_path = _zip_resolve(opf_dir, href)
+                    if any(k in low_id or k in low_href for k in ["titlepage", "title_page", "intro", "summary", "info", "about", "colophon", "copyright"]):
+                        if not titlepage_path:
+                            titlepage_path = _zip_resolve(opf_dir, href)
                     elif not any(k in low_id or k in low_href for k in ["cover", "toc", "nav"]):
                         chapter_count += 1
                         if not first_ch_path:
