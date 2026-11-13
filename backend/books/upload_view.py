@@ -5,6 +5,7 @@ If title missing, derived from filename (strip ' - author' part).
 Parses metadata via scanner.parse_epub, populates EpubBook, genres, cover.
 """
 import os
+import re
 from pathlib import Path
 
 from django.core.files.base import ContentFile
