@@ -79,9 +79,10 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
                     fontSize: '14px',
                     lineHeight: '1.4',
                     display: '-webkit-box',
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: 3,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {book.title}

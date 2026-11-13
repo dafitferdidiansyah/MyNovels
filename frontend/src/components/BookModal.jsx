@@ -29,7 +29,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
     >
       <div
         className="modal-dialog modal-dialog-centered"
-        style={{ maxWidth: '580px', width: '92%' }}
+        style={{ maxWidth: '780px', width: '95%' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-content shadow-lg border-0 rounded-4 overflow-hidden" style={{ backgroundColor: 'var(--card-bg)' }}>
@@ -120,13 +120,29 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                     </div>
 
                     {/* Main Title */}
-                    <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: '14px', lineHeight: '1.35' }}>
+                    <h5
+                      className="fw-bold mb-1 text-dark"
+                      style={{
+                        fontSize: '15px',
+                        lineHeight: '1.4',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                      }}
+                    >
                       {book.title}
-                    </h6>
+                    </h5>
 
                     {/* Original Japanese Title (kecil & rapi) */}
                     {book.original_title && (
-                      <p className="text-muted small fst-italic mb-2" style={{ fontSize: '11px', lineHeight: '1.3' }}>
+                      <p
+                        className="text-muted small fst-italic mb-2"
+                        style={{
+                          fontSize: '11px',
+                          lineHeight: '1.35',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                        }}
+                      >
                         {book.original_title}
                       </p>
                     )}

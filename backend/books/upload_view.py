@@ -36,13 +36,14 @@ class EpubUploadView(APIView):
         # Create model instance with uploaded file
         book = EpubBook()
         book.epub_file = epub_file
-        book.title = title
         orig_title = request.data.get("original_title", "").strip()
         if orig_title:
             book.original_title = orig_title
         lang_param = request.data.get("language", "").strip()
         if lang_param:
             book.language = lang_param
+        # Temporary title until parsed from epub or request
+        book.title = title or "Novel"
         book.save()  # store file, obtain PK
 
         # Path to saved file on disk
@@ -54,6 +55,17 @@ class EpubUploadView(APIView):
         if epub_path and os.path.exists(epub_path):
             try:
                 meta = parse_epub(epub_path)
+                # Prefer rich metadata title if upload title was fallback/stem
+                parsed_title = meta.get("title")
+                if parsed_title:
+                    # If request provided title was missing or matched filename stem fallback, use parsed EPUB title
+                    if not request.data.get("title") or title == stem:
+                        book.title = parsed_title
+                    else:
+                        book.title = title
+                elif title:
+                    book.title = title
+
                 if not book.original_title and meta.get("original_title"):
                     book.original_title = meta["original_title"]
                 if not book.author or book.author == "Unknown":
