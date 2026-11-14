@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDownloadUrl, translateTag } from '../api';
+import { getDownloadUrl, downloadBookFile, translateTag } from '../api';
 import CoverImage from './CoverImage';
 
 export function getReadingLength(chapters) {
@@ -17,12 +17,12 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);
 
-  const handleDownload = (e) => {
+  const handleDownload = async (e) => {
     e.stopPropagation();
     if (onDownloadClick) {
       onDownloadClick(book);
     }
-    window.location.href = getDownloadUrl(book.id);
+    await downloadBookFile(book.id, book.title);
   };
 
   return (
@@ -58,7 +58,9 @@ export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
                 <div className="d-flex align-items-center gap-1 mb-1 flex-wrap">
                   <span
                     className={`badge ${
-                      rawStatus === 'COMPLETED' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle'
+                      rawStatus === 'COMPLETED'
+                        ? 'bg-success-subtle text-success border border-success-subtle'
+                        : 'bg-info-subtle text-info-emphasis border border-info-subtle'
                     }`}
                     style={{ fontSize: '10px' }}
                   >

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from django.contrib import admin
 from django.core.files.base import ContentFile
-from .models import EpubBook, Genre, ReaderApp
+from .models import EpubBook, Genre, ReaderApp, TranslationGlossary
 from .scanner import parse_epub
 
 
@@ -30,15 +30,40 @@ class GenreAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
+@admin.register(TranslationGlossary)
+class TranslationGlossaryAdmin(admin.ModelAdmin):
+    list_display = ["original_term", "replacement_term", "category", "target_lang", "apply_stage", "ncode_display", "priority", "is_regex", "is_active", "hit_count", "updated_at"]
+    search_fields = ["original_term", "replacement_term", "ncode", "notes"]
+    list_filter = ["category", "target_lang", "apply_stage", "is_active", "is_regex", "ncode"]
+    list_editable = ["replacement_term", "priority", "is_active"]
+    fields = [
+        ("original_term", "replacement_term"),
+        ("category", "target_lang"),
+        ("apply_stage", "priority"),
+        ("ncode", "is_regex", "case_sensitive"),
+        "notes",
+        ("is_active", "hit_count"),
+    ]
+    readonly_fields = ["hit_count"]
+
+    def ncode_display(self, obj):
+        return obj.ncode if obj.ncode else "GLOBAL (ALL)"
+    ncode_display.short_description = "Scope"
+
+
 @admin.register(EpubBook)
 class EpubBookAdmin(admin.ModelAdmin):
-    list_display = ["title", "author", "language", "total_chapters", "file_size_mb", "download_count", "created_at"]
+    list_display = ["title", "author", "language", "total_chapters", "get_file_size_mb", "download_count", "created_at"]
     search_fields = ["title", "author", "description", "original_title"]
     list_filter = ["language", "genres", "created_at"]
     readonly_fields = ["file_size_bytes", "created_at", "updated_at"]
     filter_horizontal = ["genres"]
     actions = ["reparse_selected_epubs"]
     autocomplete_fields = []
+
+    def get_file_size_mb(self, obj):
+        return f"{obj.file_size_mb} MB"
+    get_file_size_mb.short_description = "Size"
     fields = [
         "epub_file",
         "title",

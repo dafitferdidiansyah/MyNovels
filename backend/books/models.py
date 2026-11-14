@@ -111,6 +111,60 @@ class EpubBook(models.Model):
     def __str__(self):
         return f"{self.title} ({self.author})"
 
+
+class TranslationGlossary(models.Model):
+    """Glossary term mapping for automated translation."""
+    CATEGORY_CHOICES = [
+        ("general", "General / Universal Term"),
+        ("name", "Character Name (Nama Karakter)"),
+        ("honorific", "Honorific / Panggilan (-san, -kun, Senpai)"),
+        ("skill", "Skill / Magic / Ability"),
+        ("place", "Location / Kingdom / Place"),
+        ("title_rule", "Chapter Title Regex / Rule"),
+    ]
+
+    STAGE_CHOICES = [
+        ("pre_mt", "Pre-MT (Lindungi kata sebelum kirim ke Google Translate)"),
+        ("post_mt", "Post-MT (Perbaiki hasil terjemahan Google Translate)"),
+        ("both", "Both Stages (Pre & Post MT)"),
+    ]
+
+    LANG_CHOICES = [
+        ("all", "All Languages (Semua Bahasa)"),
+        ("id", "Indonesian (id)"),
+        ("en", "English (en)"),
+    ]
+
+    original_term = models.CharField(max_length=150, help_text="Kata/frasa asli Jepang atau regex (e.g. 先輩, 田中, ^Episode)")
+    replacement_term = models.CharField(max_length=150, help_text="Target terjemahan atau format pengganti (e.g. Senior, Tanaka, Chapter)")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="general", db_index=True)
+    target_lang = models.CharField(max_length=10, choices=LANG_CHOICES, default="all", db_index=True, help_text="Bahasa target terjemahan")
+    apply_stage = models.CharField(max_length=10, choices=STAGE_CHOICES, default="pre_mt", help_text="Tahap penerapan istilah")
+    priority = models.PositiveIntegerField(default=100, help_text="Prioritas eksekusi (angka lebih kecil = dieksekusi lebih dulu)")
+    case_sensitive = models.BooleanField(default=True, help_text="Sensitif terhadap huruf kapital/kecil")
+    ncode = models.CharField(
+        max_length=20, 
+        blank=True, 
+        default="", 
+        db_index=True,
+        help_text="Optional novel ncode (e.g. n3353dl). Kosongkan jika berlaku global untuk SEMUA novel."
+    )
+    is_regex = models.BooleanField(default=False, help_text="Centang jika frasa asli berupa pola Regex.")
+    notes = models.CharField(max_length=255, blank=True, default="", help_text="Catatan / keterangan tambahan (opsional)")
+    hit_count = models.PositiveIntegerField(default=0, help_text="Berapa kali istilah ini terpakai saat crawling/TL")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["priority", "-created_at"]
+        verbose_name = "Translation Glossary"
+        verbose_name_plural = "Translation Glossaries"
+
+    def __str__(self):
+        scope = f"[{self.ncode}]" if self.ncode else "[GLOBAL]"
+        return f"{scope} [{self.category}][{self.target_lang}] {self.original_term} -> {self.replacement_term}"
+
     @property
     def absolute_file_path(self):
         if self.epub_file:

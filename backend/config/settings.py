@@ -93,6 +93,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # Timeout 30 detik untuk antrean write tanpa memicu "database is locked"
+            'timeout': 30,
+            # WAL (Write-Ahead Logging) mode: Membaca (READ) tidak pernah memblokir Menulis (WRITE)
+            'init_command': 'PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA busy_timeout=30000;',
+        },
     }
 }
 

@@ -19,6 +19,18 @@ Aplikasi web ePub Downloader berbasis direktori lokal dengan antarmuka UI/UX WTR
     - Direct download button & Modal pratinjau detail buku
     - Trigger pemindaian folder langsung dari modal antarmuka
 
+---
+
+## Acknowledgements & Credits
+
+Proyek ini menghargai etika atribusi open-source dan mengapresiasi karya kreator terkait:
+- **UI & Layout Inspiration**: Desain card layout novel terinspirasi oleh proyek [lara-novelku](https://github.com/taufiq-azr/lara-novelku) oleh [@taufiq-azr](https://github.com/taufiq-azr).
+- **Novel Crawler & Pipeline**: Mengadopsi standar arsitektur crawling dari [lncrawl/lightnovel-crawler](https://github.com/lncrawl/lightnovel-crawler) dan [bookfere/Ebook-Translator-Calibre-Plugin](https://github.com/bookfere/Ebook-Translator-Calibre-Plugin).
+
+> *Disclaimer*: Hak cipta tema dan desain asli tetap dimiliki oleh masing-masing pencipta. Proyek ini ditujukan untuk arsip pembaca pribadi dan riset teknis antarmuka.
+
+---
+
 ## Cara Menjalankan
 
 ### Cara Cepat (Windows)

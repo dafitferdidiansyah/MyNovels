@@ -46,10 +46,14 @@ class EpubBookFilter(django_filters.FilterSet):
     def filter_multi_status(self, queryset, name, value):
         if not value:
             return queryset
-        statuses = [s.strip().lower() for s in value.split(",") if s.strip()]
-        if not statuses:
+        raw_statuses = [s.strip() for s in value.split(",") if s.strip()]
+        if not raw_statuses:
             return queryset
-        return queryset.filter(status__in=statuses)
+        from django.db.models import Q
+        q = Q()
+        for st in raw_statuses:
+            q |= Q(status__iexact=st)
+        return queryset.filter(q)
 
     def filter_multi_language(self, queryset, name, value):
         if not value:

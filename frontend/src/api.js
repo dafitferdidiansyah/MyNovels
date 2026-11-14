@@ -140,6 +140,43 @@ export const getDownloadUrl = (id) => {
   return `${BASE_URL}/api/books/${id}/download/`;
 };
 
+export const downloadBookFile = async (id, title = 'novel') => {
+  const url = getDownloadUrl(id);
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`Download failed with status ${res.status}`);
+    }
+    const blob = await res.blob();
+    const downloadLink = document.createElement('a');
+    const objectUrl = window.URL.createObjectURL(blob);
+    downloadLink.href = objectUrl;
+    
+    // Safely extract filename from header or fallback
+    const disposition = res.headers.get('content-disposition');
+    let filename = `${title}.epub`;
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match && match[1]) {
+        filename = match[1].replace(/['"]/g, '').trim();
+      }
+    }
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    window.URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    console.warn('Blob download fallback to direct window.location:', err);
+    window.location.href = url;
+  }
+};
+
 export const getAdminAddUrl = () => {
   const adminBase = import.meta.env.VITE_ADMIN_URL || 'http://127.0.0.1:8000';
   return `${adminBase.replace(/\/$/, '')}/admin/books/epubbook/add/`;

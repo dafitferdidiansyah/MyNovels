@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getDownloadUrl, translateTag } from '../api';
+import { getDownloadUrl, downloadBookFile, translateTag } from '../api';
 import CoverImage from './CoverImage';
 import { getReadingLength } from './BookCard';
 
@@ -7,17 +7,23 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
   if (!book) return null;
 
   const [activeTab, setActiveTab] = useState('info');
+  const [downloading, setDownloading] = useState(false);
 
   const coverUrl = book.cover || '';
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (onDownloadClick) {
       onDownloadClick(book);
     }
-    window.location.href = getDownloadUrl(book.id);
+    setDownloading(true);
+    try {
+      await downloadBookFile(book.id, book.title);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (

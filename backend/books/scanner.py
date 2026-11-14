@@ -411,6 +411,25 @@ def parse_epub(epub_path: str) -> dict:
                     cover_filename = posixpath.basename(name)
                     break
 
+        # Novel Status (Completed vs Ongoing)
+        status = "Completed"
+        if metadata is not None:
+            # 1. Check explicit meta property
+            for m in metadata.findall("opf:meta", DC_NS) + metadata.findall("{http://www.idpf.org/2007/opf}meta") + metadata.findall("meta"):
+                prop = m.attrib.get("property", "") or m.attrib.get("name", "")
+                if prop in ("ncode:status", "status"):
+                    val = (m.text or m.attrib.get("content") or "").strip().capitalize()
+                    if val in ("Completed", "Ongoing"):
+                        status = val
+                        break
+
+        # 2. Heuristic from tags/genres if not explicitly set
+        low_genres = [g.lower() for g in genres]
+        if "ongoing" in low_genres or "連載中" in low_genres:
+            status = "Ongoing"
+        elif "completed" in low_genres or "完結済" in low_genres:
+            status = "Completed"
+
         return {
             "title": title,
             "original_title": original_title,
@@ -418,6 +437,7 @@ def parse_epub(epub_path: str) -> dict:
             "description": description,
             "language": language,
             "genres": genres,
+            "status": status,
             "total_chapters": max(chapter_count, 1),
             "total_characters": total_chars,
             "source_url": source_url,
@@ -463,6 +483,7 @@ def scan_epub_directory(folder_or_file_path: str, force_update: bool = False) ->
                 book.author = metadata["author"]
                 book.description = metadata["description"]
                 book.language = metadata["language"]
+                book.status = metadata.get("status", "Completed")
                 book.source_url = metadata.get("source_url", "")
                 book.identifier = metadata.get("identifier", "")
                 book.file_size_bytes = metadata["file_size"]
@@ -476,6 +497,7 @@ def scan_epub_directory(folder_or_file_path: str, force_update: bool = False) ->
                     author=metadata["author"],
                     description=metadata["description"],
                     language=metadata["language"],
+                    status=metadata.get("status", "Completed"),
                     source_url=metadata.get("source_url", ""),
                     identifier=metadata.get("identifier", ""),
                     file_path=file_path,
