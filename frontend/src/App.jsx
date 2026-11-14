@@ -6,7 +6,6 @@ import CoverImage from './components/CoverImage';
 import BookModal from './components/BookModal';
 import ScanModal from './components/ScanModal';
 import Toast from './components/Toast';
-import MobileBottomNav from './components/MobileBottomNav';
 import NovelFinder from './components/NovelFinder';
 import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps, translateTag } from './api';
 
@@ -579,18 +578,6 @@ export default function App() {
                 ))}
               </div>
             )}
-
-            <span className="text-secondary">
-              UI by{' '}
-              <a
-                href="https://github.com/taufiq-azr"
-                target="_blank"
-                rel="noreferrer"
-                className="text-decoration-none fw-semibold"
-              >
-                @taufiq-azr
-              </a>
-            </span>
           </div>
         </div>
       </footer>
@@ -616,15 +603,6 @@ export default function App() {
 
       {/* Toast Notifications */}
       <Toast toasts={toasts} onRemove={removeToast} />
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav
-        darkMode={darkMode}
-        onToggleDark={toggleDarkMode}
-        onOpenSearch={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      />
     </div>
   );
 }

@@ -194,21 +194,6 @@ body {
   border: 1px solid #ef4444;
 }
 
-/* Mobile bottom nav */
-.mobile-bottom-nav {
-  display: none;
-}
-@media (max-width: 767.98px) {
-  .mobile-bottom-nav {
-    display: flex !important;
-    background-color: var(--card-bg) !important;
-    border-color: var(--card-border) !important;
-  }
-  body {
-    padding-bottom: 60px;
-  }
-}
-
 /* Dark mode generic overrides */
 [data-theme='dark'] .bg-white,
 [data-theme='dark'] .modal-content,
