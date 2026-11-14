@@ -211,6 +211,15 @@ class EpubDownloadView(APIView):
                             ncx_str = re.sub(rf'<navPoint\b[^>]*>.*?<content\b[^>]*src=["\'][^"\']*{re.escape(ex_base)}["\'][^>]*/>.*?</navPoint>\s*', '', ncx_str, flags=re.DOTALL)
                         data = ncx_str.encode("utf-8")
 
+                    # Filter EPUB3 nav.xhtml / toc.xhtml references
+                    elif item.filename.endswith((".xhtml", ".html")) and ("nav" in item.filename or "toc" in item.filename):
+                        nav_str = data.decode("utf-8", errors="replace")
+                        for ex in excluded_names:
+                            ex_base = os.path.basename(ex)
+                            # Remove list item containing the link to excluded chapter
+                            nav_str = re.sub(rf'<li\b[^>]*>\s*<a\b[^>]*href=["\'][^"\']*{re.escape(ex_base)}["\'][^>]*>.*?</a>\s*</li>\s*', '', nav_str, flags=re.DOTALL)
+                        data = nav_str.encode("utf-8")
+
                     dst_zip.writestr(item, data)
 
             if temp_out.is_file():
