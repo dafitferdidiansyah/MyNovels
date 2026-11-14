@@ -58,6 +58,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
           <ul className="nav nav-tabs px-3 pt-2 border-bottom" style={{ fontSize: '12px' }}>
             <li className="nav-item">
               <button
+                type="button"
                 className={`nav-link ${activeTab === 'info' ? 'active fw-bold' : ''}`}
                 onClick={() => setActiveTab('info')}
               >
@@ -66,18 +67,11 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
             </li>
             <li className="nav-item">
               <button
+                type="button"
                 className={`nav-link ${activeTab === 'synopsis' ? 'active fw-bold' : ''}`}
                 onClick={() => setActiveTab('synopsis')}
               >
                 Synopsis
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'download' ? 'active fw-bold' : ''}`}
-                onClick={() => setActiveTab('download')}
-              >
-                Download ({book.file_size_mb} MB)
               </button>
             </li>
           </ul>
@@ -193,9 +187,36 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                         </span>
                       ))}
                     </div>
+
+                    {/* Synopsis Preview */}
+                    {book.description && (
+                      <div className="mt-2 pt-2 border-top">
+                        <p
+                          className="text-secondary mb-1"
+                          style={{
+                            fontSize: '11.5px',
+                            lineHeight: '1.5',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {book.description}
+                        </p>
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-decoration-none fw-semibold"
+                          style={{ fontSize: '11px' }}
+                          onClick={() => setActiveTab('synopsis')}
+                        >
+                          Read full synopsis &rarr;
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="text-muted small" style={{ fontSize: '11px' }}>
+                  <div className="text-muted small mt-2" style={{ fontSize: '11px' }}>
                     Size: <b>{book.file_size_mb} MB</b> &bull; Chars: <b>{book.chars_display || '-'}</b>
                   </div>
                 </div>
@@ -221,33 +242,12 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                 </div>
               </div>
             )}
-
-            {activeTab === 'download' && (
-              <div className="text-center py-3">
-                <div className="mb-3">
-                  <span className="badge bg-dark rounded-pill px-3 py-2 fs-6">
-                    {book.file_size_mb} MB EPUB Archive
-                  </span>
-                </div>
-                <p className="text-secondary small mb-3">
-                  Universal EPUB format compatible with all major e-readers, tablets, and mobile reading apps. Total downloads: <b>{book.download_count}x</b>
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-dark btn-lg rounded-pill px-5 fw-medium shadow-sm"
-                  style={{ fontSize: '13px' }}
-                  onClick={handleDownload}
-                >
-                  Download EPUB Now
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Footer Actions */}
           <div className="modal-footer px-3 py-2 d-flex align-items-center justify-content-between">
-            <span className="text-muted" style={{ fontSize: '10.5px' }}>
-              Downloads: <b>{book.download_count}x</b>
+            <span className="text-muted" style={{ fontSize: '11px' }}>
+              <b>{book.total_chapters}</b> Ch &bull; <b>{book.file_size_mb} MB</b> &bull; Downloads: <b>{book.download_count}x</b>
             </span>
             <div className="d-flex gap-2">
               <button
@@ -260,11 +260,22 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
               </button>
               <button
                 type="button"
-                className="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-medium"
+                className="btn btn-dark btn-sm rounded-pill px-3 py-1 fw-medium d-inline-flex align-items-center gap-1 shadow-sm"
                 style={{ fontSize: '11px' }}
                 onClick={handleDownload}
+                disabled={downloading}
               >
-                Download EPUB
+                {downloading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '11px', height: '11px' }}></span>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download EPUB ({book.file_size_mb} MB)
+                  </>
+                )}
               </button>
             </div>
           </div>
