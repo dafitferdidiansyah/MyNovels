@@ -60,7 +60,8 @@ export function getCleanPrimaryGenre(genres, title = '') {
 }
 
 export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
-  const coverUrl = book.cover || '';
+  const rawCover = book.cover || '';
+  const coverUrl = rawCover.replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/, '');
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const primaryGenre = getCleanPrimaryGenre(genres, book.title || '');
   const rawStatus = (book.status || 'Completed').toUpperCase();

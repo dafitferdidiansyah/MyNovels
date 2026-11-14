@@ -9,7 +9,8 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
   const [activeTab, setActiveTab] = useState('info');
   const [downloading, setDownloading] = useState(false);
 
-  const coverUrl = book.cover || '';
+  const rawCover = book.cover || '';
+  const coverUrl = rawCover.replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/, '');
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);

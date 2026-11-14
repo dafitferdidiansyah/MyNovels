@@ -1,6 +1,11 @@
 // API Client for EPUB Downloader Backend
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'https://playset-setting-supermom.ngrok-free.dev').replace(/\/$/, '');
+const BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname.includes('readthis.web.id') || window.location.hostname.includes('pages.dev'))
+    ? ''
+    : 'https://playset-setting-supermom.ngrok-free.dev')
+).replace(/\/$/, '');
 
 // Common headers for Ngrok tunnel support & JSON
 const defaultHeaders = {
