@@ -1,5 +1,14 @@
 // API Client for EPUB Downloader Backend
 
+export function normalizeCoverUrl(url) {
+  if (!url) return '';
+  const idx = url.indexOf('/media/');
+  if (idx !== -1) {
+    return url.slice(idx);
+  }
+  return url;
+}
+
 const BASE_URL = (
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && (window.location.hostname.includes('readthis.web.id') || window.location.hostname.includes('pages.dev'))

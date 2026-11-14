@@ -55,11 +55,11 @@ class EpubBookListSerializer(serializers.ModelSerializer):
     download_url = serializers.SerializerMethodField()
 
     def get_cover(self, obj):
-        request = self.context.get("request")
         cover_path = obj.display_cover
-        if cover_path and not cover_path.startswith("http"):
-            if request is not None:
-                return request.build_absolute_uri(cover_path)
+        if not cover_path:
+            return ""
+        if "/media/" in cover_path:
+            return cover_path[cover_path.index("/media/"):]
         return cover_path
 
     class Meta:
@@ -105,11 +105,11 @@ class EpubBookDetailSerializer(serializers.ModelSerializer):
     download_url = serializers.SerializerMethodField()
 
     def get_cover(self, obj):
-        request = self.context.get("request")
         cover_path = obj.display_cover
-        if cover_path and not cover_path.startswith("http"):
-            if request is not None:
-                return request.build_absolute_uri(cover_path)
+        if not cover_path:
+            return ""
+        if "/media/" in cover_path:
+            return cover_path[cover_path.index("/media/"):]
         return cover_path
 
     class Meta:

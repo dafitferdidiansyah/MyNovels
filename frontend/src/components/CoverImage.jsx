@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
+function normalizeMediaSrc(url) {
+  if (!url) return '';
+  const idx = url.indexOf('/media/');
+  if (idx !== -1) {
+    return url.slice(idx);
+  }
+  return url;
+}
+
 function escapeXml(unsafe = '') {
   return String(unsafe)
     .replace(/&/g, '&amp;')
@@ -138,17 +147,19 @@ export function generateRetroCoverSvg(title = '', author = '', tag = '') {
 
 export default function CoverImage({ src, alt, title = '', author = '', className, style, ...props }) {
   const fallback = generateRetroCoverSvg(title || alt, author);
-  const isGenericPlaceholder = !src || src.includes('cover_placeholder.svg');
-  const initialSrc = isGenericPlaceholder ? fallback : src;
+  const cleanSrc = normalizeMediaSrc(src);
+  const isGenericPlaceholder = !cleanSrc || cleanSrc.includes('cover_placeholder.svg');
+  const initialSrc = isGenericPlaceholder ? fallback : cleanSrc;
 
   const [imgSrc, setImgSrc] = useState(initialSrc);
 
   useEffect(() => {
     const nextFallback = generateRetroCoverSvg(title || alt, author);
-    if (!src || src.includes('cover_placeholder.svg')) {
+    const nextCleanSrc = normalizeMediaSrc(src);
+    if (!nextCleanSrc || nextCleanSrc.includes('cover_placeholder.svg')) {
       setImgSrc(nextFallback);
     } else {
-      setImgSrc(src);
+      setImgSrc(nextCleanSrc);
     }
   }, [src, title, alt, author]);
 

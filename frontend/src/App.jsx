@@ -7,7 +7,7 @@ import BookModal from './components/BookModal';
 import ScanModal from './components/ScanModal';
 import Toast from './components/Toast';
 import NovelFinder from './components/NovelFinder';
-import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps, translateTag } from './api';
+import { fetchBooks, fetchGenres, fetchStats, fetchReaderApps, translateTag, normalizeCoverUrl } from './api';
 
 export default function App() {
   const [books, setBooks] = useState([]);
@@ -276,7 +276,7 @@ export default function App() {
                       onClick={() => setSelectedBook(b)}
                     >
                       <CoverImage
-                        src={b.cover || ''}
+                        src={normalizeCoverUrl(b.cover)}
                         alt={b.title}
                         title={b.title}
                         author={b.author}

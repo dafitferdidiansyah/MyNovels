@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getDownloadUrl, downloadBookFile, translateTag } from '../api';
+import { getDownloadUrl, downloadBookFile, translateTag, normalizeCoverUrl } from '../api';
 import CoverImage from './CoverImage';
 import { getReadingLength } from './BookCard';
 
@@ -9,8 +9,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
   const [activeTab, setActiveTab] = useState('info');
   const [downloading, setDownloading] = useState(false);
 
-  const rawCover = book.cover || '';
-  const coverUrl = rawCover.replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/, '');
+  const coverUrl = normalizeCoverUrl(book.cover);
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);

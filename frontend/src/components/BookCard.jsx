@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDownloadUrl, downloadBookFile, translateTag } from '../api';
+import { getDownloadUrl, downloadBookFile, translateTag, normalizeCoverUrl } from '../api';
 import CoverImage from './CoverImage';
 
 export function getReadingLength(chapters) {
@@ -60,8 +60,7 @@ export function getCleanPrimaryGenre(genres, title = '') {
 }
 
 export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
-  const rawCover = book.cover || '';
-  const coverUrl = rawCover.replace(/^https?:\/\/127\.0\.0\.1(:\d+)?/, '');
+  const coverUrl = normalizeCoverUrl(book.cover);
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const primaryGenre = getCleanPrimaryGenre(genres, book.title || '');
   const rawStatus = (book.status || 'Completed').toUpperCase();
