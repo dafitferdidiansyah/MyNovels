@@ -3,7 +3,7 @@
 const BASE_URL = (
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && (window.location.hostname.includes('readthis.web.id') || window.location.hostname.includes('pages.dev'))
-    ? ''
+    ? 'https://api.readthis.web.id'
     : 'https://playset-setting-supermom.ngrok-free.dev')
 ).replace(/\/$/, '');
 
