@@ -59,6 +59,8 @@ export default function ScanModal({ isOpen, onClose, onScanSuccess }) {
               <div className="mb-3">
                 <label className="form-label small fw-bold text-dark">Directory Path:</label>
                 <input
+                  id="scan-directory-path"
+                  name="scan-directory-path"
                   type="text"
                   required
                   value={folderPath}

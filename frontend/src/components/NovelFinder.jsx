@@ -15,6 +15,8 @@ export default function NovelFinder({ books }) {
   return (
     <div className="novel-finder my-4">
       <input
+        id="novel-finder-search"
+        name="novel-finder-query"
         type="search"
         className="form-control mb-3"
         placeholder="Find novel by title, author, or original..."
