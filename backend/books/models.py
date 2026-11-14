@@ -111,6 +111,36 @@ class EpubBook(models.Model):
     def __str__(self):
         return f"{self.title} ({self.author})"
 
+    @property
+    def absolute_file_path(self):
+        if self.epub_file:
+            return self.epub_file.path
+        return self.file_path
+
+    @property
+    def file_size_mb(self):
+        if not self.file_size_bytes:
+            return 0.0
+        return round(self.file_size_bytes / (1024 * 1024), 2)
+
+    @property
+    def display_cover(self):
+        if self.cover_image:
+            return self.cover_image.url
+        if self.cover_url:
+            return self.cover_url
+        return "/assets/cover_placeholder.svg"
+
+    @property
+    def chars_display(self):
+        if not self.total_characters:
+            return "120K"
+        if self.total_characters >= 1000000:
+            return f"{round(self.total_characters / 1000000, 1)}M"
+        if self.total_characters >= 1000:
+            return f"{round(self.total_characters / 1000, 1)}K"
+        return str(self.total_characters)
+
 
 class TranslationGlossary(models.Model):
     """Glossary term mapping for automated translation."""
@@ -164,36 +194,6 @@ class TranslationGlossary(models.Model):
     def __str__(self):
         scope = f"[{self.ncode}]" if self.ncode else "[GLOBAL]"
         return f"{scope} [{self.category}][{self.target_lang}] {self.original_term} -> {self.replacement_term}"
-
-    @property
-    def absolute_file_path(self):
-        if self.epub_file:
-            return self.epub_file.path
-        return self.file_path
-
-    @property
-    def file_size_mb(self):
-        if not self.file_size_bytes:
-            return 0.0
-        return round(self.file_size_bytes / (1024 * 1024), 2)
-
-    @property
-    def display_cover(self):
-        if self.cover_image:
-            return self.cover_image.url
-        if self.cover_url:
-            return self.cover_url
-        return "/assets/cover_placeholder.svg"
-
-    @property
-    def chars_display(self):
-        if not self.total_characters:
-            return "120K"
-        if self.total_characters >= 1000000:
-            return f"{round(self.total_characters / 1000000, 1)}M"
-        if self.total_characters >= 1000:
-            return f"{round(self.total_characters / 1000, 1)}K"
-        return str(self.total_characters)
 
 
 @receiver(post_delete, sender=EpubBook)
