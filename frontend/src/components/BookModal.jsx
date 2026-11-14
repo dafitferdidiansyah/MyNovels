@@ -176,7 +176,16 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                     <div className="d-flex flex-wrap gap-1 mb-2">
                       {genres.filter(g => {
                         const name = typeof g === 'object' ? g.name : String(g);
-                        return name.length <= 30 && !name.includes('\n');
+                        if (!name || name.length > 30 || name.includes('\n')) return false;
+                        if (/["'“”「」『』!?！？*\/…~→\\]/.test(name)) return false;
+                        const lower = name.toLowerCase();
+                        const junk = [
+                          'published', 'reposted', 'magnet', 'other site', 'thank you', 'understanding',
+                          'good day', 'hello', 'everyone', 'not so bad', 'teen 15+', 'r15', 'violence',
+                          'gore', 'award', 'prize', '大賞', 'contest', 'cruelty', 'original', 'second life begins',
+                          'am i the', 'live normally'
+                        ];
+                        return !junk.some(j => lower.includes(j));
                       }).map((g, idx) => (
                         <span key={idx} className="badge bg-light text-secondary border fw-normal" style={{ fontSize: '9.5px' }}>
                           {translateTag(g)}

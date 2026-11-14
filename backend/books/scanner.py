@@ -257,41 +257,99 @@ def parse_epub(epub_path: str) -> dict:
         }
 
         if metadata is not None:
+            raw_candidates = []
             for s in metadata.findall("dc:subject", DC_NS) + metadata.findall("{http://purl.org/dc/elements/1.1/}subject"):
                 if s.text and s.text.strip():
                     raw_tag = s.text.strip()
-                    # Filter out long paragraphs or junk mistakenly stored as dc:subject
-                    if len(raw_tag) > 35 or "\n" in raw_tag:
+                    if len(raw_tag) > 40 or "\n" in raw_tag:
                         continue
-                    # Check mapping
                     mapped_tag = TAG_TRANSLATION_MAP.get(raw_tag)
                     if not mapped_tag:
-                        # Partial match in tag
                         for jp_k, en_v in TAG_TRANSLATION_MAP.items():
                             if jp_k in raw_tag:
                                 mapped_tag = en_v
                                 break
-                    genres.append(mapped_tag if mapped_tag else raw_tag)
+                    raw_candidates.append(mapped_tag if mapped_tag else raw_tag)
 
-        # Auto-detect common novel tags from title/filename if empty
-        if not genres:
+            # Filter out author notes, dialogue, quotes, disclaimers, contest tags, warnings
+            junk_blacklist = [
+                "published on", "reposted", "magnet", "syosetsu", "kakuyomu", "alphapolis",
+                "novelup", "other site", "cross-post", "crosspost", "thank you", "understanding",
+                "good day", "hello", "everyone", "i am", "i'm", "not so bad", "second life begins",
+                "am i the", "live normally", "i want", "second life", "doing as one", "doing whatever",
+                "やりたい放題", "掲示板", "外道", "他サイト", "重複", "警告", "お知らせ", "完結済",
+                "連載中", "未完", "転載", "award", "grand prize", "prize", "大賞", "コンテスト",
+                "dncmoon", "esn", "hj", "teen 15+", "r15", "r-15", "r18", "r-18", "gore", "violence",
+                "cruelty", "original", "/"
+            ]
+
+            def is_clean_genre(t: str) -> bool:
+                if not t or len(t) < 2 or len(t) > 30:
+                    return False
+                # No dialogue quotes, exclamation/question marks or symbols
+                if any(c in t for c in ['"', "'", "“", "”", "「", "」", "『", "』", "!", "?", "！", "？", "*", "/", "…", "【", "】", "→", "\\"]):
+                    return False
+                # Filter untranslated raw Japanese phrases
+                if any('\u3040' <= c <= '\u9fff' for c in t):
+                    return False
+                t_lower = t.lower()
+                return not any(b in t_lower for b in junk_blacklist)
+
+            filtered = [t for t in raw_candidates if is_clean_genre(t)]
+
+            # Deduplicate preserving order
+            seen = set()
+            for t in filtered:
+                tl = t.lower()
+                if tl not in seen:
+                    seen.add(tl)
+                    genres.append(t)
+
+        # Canonical genre priority sorting
+        priority_order = [
+            "fantasy", "isekai reincarnation", "isekai", "reincarnation", "transmigration",
+            "summoning / transmigration", "romance", "romantic comedy", "romcom", "flirty romance",
+            "school love", "action", "adventure", "comedy", "comedy/heartwarming", "gender bender",
+            "girls' love", "boys' love", "yuri", "yuri/yuri harem", "yaoi", "harem", "drama",
+            "sci-fi", "slice of life", "mystery", "horror", "villainess", "supernatural", "magic",
+            "martial arts", "litrpg", "status / litrpg", "litrpg / game", "slow life", "dark fantasy"
+        ]
+
+        def genre_sort_key(g_name: str) -> int:
+            gl = g_name.lower()
+            try:
+                return priority_order.index(gl)
+            except ValueError:
+                return 1000
+
+        genres.sort(key=genre_sort_key)
+
+        # Auto-detect common novel tags from title/filename if empty or missing canonical genre
+        has_canonical = any(g.lower() in priority_order for g in genres)
+        if not genres or not has_canonical:
             low_title = (title + " " + stem_name).lower()
             detected_tags = []
             tag_keywords = {
-                "Action": ["action", "battle", "fight", "war"],
-                "Fantasy": ["fantasy", "magic", "dragon", "spirit", "realm", "god", "fairy"],
-                "Isekai": ["reincarnat", "summoned", "another world", "isekai", "ts ", "転生", "異世界"],
+                "Gender Bender": ["became a beautiful girl", "became a girl", "transgender", "woman and", "ts "],
+                "Isekai Reincarnation": ["reincarnat", "summoned", "another world", "isekai", "転生", "異世界"],
                 "Transmigration": ["transmigration", "transmigrated", "quick transmigration"],
-                "Romance": ["romance", "love", "lover", "wife", "princess", "beauty"],
+                "Romance": ["romance", "love", "lover", "wife", "girlfriend", "boyfriend", "princess", "beauty"],
+                "Romantic Comedy": ["romantic comedy", "romcom", "ridiculously easy"],
                 "Comedy": ["comedy", "funny", "chaos"],
+                "Action": ["action", "battle", "fight", "war"],
+                "Fantasy": ["fantasy", "magic", "dragon", "spirit", "realm", "god", "fairy", "crown prince"],
                 "Adventure": ["adventure", "journey", "quest", "dungeon"],
                 "Martial Arts": ["martial", "cultivation", "xianxia", "dao", "immortal"],
-                "System": ["system", "inventory", "sign in", "level", "gm privileges"],
+                "LitRPG": ["system", "inventory", "sign in", "level", "gm privileges"],
             }
             for tag, kws in tag_keywords.items():
-                if any(k in low_title for k in kws):
+                if any(k in low_title for k in kws) and tag not in genres:
                     detected_tags.append(tag)
-            genres = detected_tags if detected_tags else ["Fantasy", "Light Novel"]
+            
+            # Combine detected canonical tags at the front
+            genres = detected_tags + genres
+            if not genres:
+                genres = ["Fantasy", "Light Novel"]
 
         # 3. Manifest & Chapters
         manifest = tree.find("opf:manifest", DC_NS)

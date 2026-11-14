@@ -1,6 +1,8 @@
 import os
+import urllib.parse
+from django.conf import settings
 from django.db.models import F, Count, Sum
-from django.http import FileResponse, Http404
+from django.http import FileResponse, HttpResponse, Http404
 from rest_framework import generics, filters, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -86,7 +88,7 @@ class EpubBookDetailView(generics.RetrieveAPIView):
 
 
 class EpubDownloadView(APIView):
-    """Direct secure download endpoint without exposing local disk path."""
+    """Direct secure download endpoint with X-Accel-Redirect offloading to Nginx."""
 
     def get(self, request, pk):
         try:
@@ -102,9 +104,28 @@ class EpubDownloadView(APIView):
         EpubBook.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
 
         filename = os.path.basename(target_path)
-        # Handle UTF-8 / ASCII safe filename header
+        # RFC 6266 / RFC 5987 standard for safe utf-8 filename in HTTP header
+        ascii_fallback = filename.encode("ascii", "ignore").decode().strip() or "novel.epub"
+        quoted_filename = urllib.parse.quote(filename)
+        content_disposition = f'attachment; filename="{ascii_fallback}"; filename*=UTF-8\'\'{quoted_filename}'
+
+        # Offload file transfer to Nginx via X-Accel-Redirect when running on Linux / production
+        media_root = str(settings.MEDIA_ROOT).replace("\\", "/").rstrip("/")
+        norm_target = str(target_path).replace("\\", "/")
+
+        if (os.name != "nt" or getattr(settings, "USE_X_ACCEL", False)) and norm_target.startswith(media_root):
+            rel_path = norm_target[len(media_root):].lstrip("/")
+            # Use percent-encoded URI for X-Accel-Redirect so Django won't MIME-encode the header
+            quoted_rel_path = urllib.parse.quote(rel_path)
+            response = HttpResponse(content_type="application/epub+zip")
+            response["X-Accel-Redirect"] = f"/protected_media/{quoted_rel_path}"
+            response["Content-Disposition"] = content_disposition
+            response["Access-Control-Expose-Headers"] = "Content-Disposition"
+            return response
+
+        # Local fallback (Windows dev)
         response = FileResponse(open(target_path, "rb"), content_type="application/epub+zip")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response["Content-Disposition"] = content_disposition
         response["Access-Control-Expose-Headers"] = "Content-Disposition"
         return response
 

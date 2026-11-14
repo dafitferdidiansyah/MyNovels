@@ -10,10 +10,59 @@ export function getReadingLength(chapters) {
   return { label: 'Epic', className: 'badge-length-epic' };
 }
 
+const CANONICAL_PRIORITY = [
+  'Fantasy', 'Isekai Reincarnation', 'Isekai', 'Reincarnation', 'Transmigration',
+  'Summoning / Transmigration', 'Romance', 'Romantic Comedy', 'Flirty Romance',
+  'School Love', 'Action', 'Adventure', 'Comedy', 'Comedy/Heartwarming',
+  'Gender Bender', "Girls' Love", "Boys' Love", 'Yuri', 'Yuri/Yuri Harem',
+  'Harem', 'Drama', 'Sci-Fi', 'Slice of Life', 'Mystery', 'Villainess', 'Magic',
+  'Original war chronicle'
+];
+
+const JUNK_TAG_FRAGMENTS = [
+  'published', 'reposted', 'magnet', 'other site', 'thank you', 'understanding',
+  'good day', 'hello', 'everyone', 'not so bad', 'teen 15+', 'r15', 'violence',
+  'gore', 'award', 'prize', '大賞', 'contest', 'cruelty', 'original', 'second life begins',
+  'am i the', 'live normally'
+];
+
+export function getCleanPrimaryGenre(genres, title = '') {
+  if (!Array.isArray(genres) || genres.length === 0) {
+    const low = title.toLowerCase();
+    if (low.includes('reincarnat') || low.includes('isekai')) return 'Isekai';
+    if (low.includes('girl') && (low.includes('guy') || low.includes('man') || low.includes('transgender'))) return 'Gender Bender';
+    if (low.includes('romance') || low.includes('love')) return 'Romance';
+    return 'Web Novel';
+  }
+
+  const rawTags = genres.map(g => (typeof g === 'object' ? g.name : String(g))).filter(Boolean);
+
+  const cleanTags = rawTags.filter(str => {
+    const s = str.trim();
+    if (s.length < 2 || s.length > 30) return false;
+    if (/["'“”「」『』!?！？*\/…~→\\]/.test(s)) return false;
+    const lower = s.toLowerCase();
+    return !JUNK_TAG_FRAGMENTS.some(frag => lower.includes(frag));
+  });
+
+  // Try finding top canonical genre
+  for (const prio of CANONICAL_PRIORITY) {
+    const found = cleanTags.find(t => t.toLowerCase() === prio.toLowerCase());
+    if (found) return translateTag(found);
+  }
+
+  // Fallback to first clean tag
+  if (cleanTags.length > 0) {
+    return translateTag(cleanTags[0]);
+  }
+
+  return 'Web Novel';
+}
+
 export default function BookCard({ book, onOpenDetail, onDownloadClick }) {
   const coverUrl = book.cover || '';
   const genres = Array.isArray(book.genres) ? book.genres : [];
-  const primaryGenre = translateTag(genres[0]) || 'Web Novel';
+  const primaryGenre = getCleanPrimaryGenre(genres, book.title || '');
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);
 
