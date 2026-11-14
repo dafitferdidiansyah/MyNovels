@@ -88,7 +88,9 @@ class EpubBookDetailView(generics.RetrieveAPIView):
 
 
 class EpubDownloadView(APIView):
-    """Direct secure download endpoint with X-Accel-Redirect offloading to Nginx."""
+    """Direct secure download endpoint with X-Accel-Redirect offloading to Nginx.
+    Supports MeGaneBuk-style batch chapter slicing (?start=1&end=50).
+    """
 
     def get(self, request, pk):
         try:
@@ -99,6 +101,21 @@ class EpubDownloadView(APIView):
         target_path = book.absolute_file_path
         if not target_path or not os.path.exists(target_path):
             raise Http404("File ePub pada storage server tidak ditemukan.")
+
+        # Check for range batch download parameters (start & end)
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
+        if start_param and end_param:
+            try:
+                start_ch = int(start_param)
+                end_ch = int(end_param)
+                if 1 <= start_ch <= end_ch:
+                    range_epub_path = self._build_range_epub(book, target_path, start_ch, end_ch)
+                    if range_epub_path and os.path.exists(range_epub_path):
+                        target_path = range_epub_path
+            except Exception as e:
+                import logging
+                logging.getLogger("books").warning(f"Failed to generate range epub: {e}")
 
         # Increment atomic download counter
         EpubBook.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
@@ -115,7 +132,6 @@ class EpubDownloadView(APIView):
 
         if (os.name != "nt" or getattr(settings, "USE_X_ACCEL", False)) and norm_target.startswith(media_root):
             rel_path = norm_target[len(media_root):].lstrip("/")
-            # Use percent-encoded URI for X-Accel-Redirect so Django won't MIME-encode the header
             quoted_rel_path = urllib.parse.quote(rel_path)
             response = HttpResponse(content_type="application/epub+zip")
             response["X-Accel-Redirect"] = f"/protected_media/{quoted_rel_path}"
@@ -123,11 +139,85 @@ class EpubDownloadView(APIView):
             response["Access-Control-Expose-Headers"] = "Content-Disposition"
             return response
 
-        # Local fallback (Windows dev)
+        # Local fallback
         response = FileResponse(open(target_path, "rb"), content_type="application/epub+zip")
         response["Content-Disposition"] = content_disposition
         response["Access-Control-Expose-Headers"] = "Content-Disposition"
         return response
+
+    def _build_range_epub(self, book, source_path, start_ch, end_ch):
+        """Extracts and repacks a valid subset of chapters from existing EPUB into a batch EPUB."""
+        import zipfile
+        import tempfile
+        import re
+        from pathlib import Path
+
+        range_label = f"Ch {start_ch:03d}-{end_ch:03d}"
+        stem = Path(source_path).stem
+        batch_filename = f"{stem} ({range_label}).epub"
+
+        # Check in media/batches cache directory
+        batches_dir = Path(settings.MEDIA_ROOT) / "batches"
+        batches_dir.mkdir(parents=True, exist_ok=True)
+        cached_batch_file = batches_dir / batch_filename
+        if cached_batch_file.is_file() and cached_batch_file.stat().st_size > 5000:
+            return str(cached_batch_file)
+
+        # Inspect and slice EPUB chapters
+        with zipfile.ZipFile(source_path, "r") as src_zip:
+            namelist = src_zip.namelist()
+            
+            # Find chapter files (e.g., OEBPS/chapter_001.xhtml or chapter-1.xhtml)
+            chapter_entries = []
+            for name in namelist:
+                m = re.search(r'(?:chapter|ch)[-_]?(\d+)', name, re.IGNORECASE)
+                if m and name.endswith(('.xhtml', '.html', '.htm')):
+                    ep_num = int(m.group(1))
+                    chapter_entries.append((ep_num, name))
+            
+            if not chapter_entries:
+                return source_path
+
+            chapter_entries.sort(key=lambda x: x[0])
+            matched_names = {name for ep, name in chapter_entries if start_ch <= ep <= end_ch}
+            excluded_names = {name for ep, name in chapter_entries if name not in matched_names}
+
+            if not matched_names:
+                return source_path
+
+            # Create partial EPUB in memory or temp file
+            temp_out = batches_dir / f"tmp_{batch_filename}"
+            with zipfile.ZipFile(temp_out, "w", compression=zipfile.ZIP_DEFLATED) as dst_zip:
+                for item in src_zip.infolist():
+                    if item.filename in excluded_names:
+                        continue
+                    
+                    data = src_zip.read(item.filename)
+                    # Filter spine / manifest references in content.opf
+                    if item.filename.endswith(".opf"):
+                        opf_str = data.decode("utf-8", errors="replace")
+                        for ex in excluded_names:
+                            ex_base = os.path.basename(ex)
+                            # Remove itemref & item definitions for excluded chapters
+                            opf_str = re.sub(rf'<item\b[^>]*href=["\'][^"\']*{re.escape(ex_base)}["\'][^>]*/>\s*', '', opf_str)
+                            opf_str = re.sub(rf'<itemref\b[^>]*idref=["\'][^"\']*{re.escape(Path(ex_base).stem)}["\'][^>]*/>\s*', '', opf_str)
+                        data = opf_str.encode("utf-8")
+                    
+                    # Filter nav / toc.ncx references
+                    elif item.filename.endswith(".ncx"):
+                        ncx_str = data.decode("utf-8", errors="replace")
+                        for ex in excluded_names:
+                            ex_base = os.path.basename(ex)
+                            ncx_str = re.sub(rf'<navPoint\b[^>]*>.*?<content\b[^>]*src=["\'][^"\']*{re.escape(ex_base)}["\'][^>]*/>.*?</navPoint>\s*', '', ncx_str, flags=re.DOTALL)
+                        data = ncx_str.encode("utf-8")
+
+                    dst_zip.writestr(item, data)
+
+            if temp_out.is_file():
+                temp_out.replace(cached_batch_file)
+                return str(cached_batch_file)
+
+        return source_path
 
 
 class TriggerScanView(APIView):

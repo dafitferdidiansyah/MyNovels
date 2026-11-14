@@ -150,12 +150,15 @@ export const triggerScan = async (folderPath = '') => {
   return await res.json();
 };
 
-export const getDownloadUrl = (id) => {
+export const getDownloadUrl = (id, range = null) => {
+  if (range && range.start && range.end) {
+    return `${BASE_URL}/api/books/${id}/download/?start=${range.start}&end=${range.end}`;
+  }
   return `${BASE_URL}/api/books/${id}/download/`;
 };
 
-export const downloadBookFile = async (id, title = 'novel') => {
-  const url = getDownloadUrl(id);
+export const downloadBookFile = async (id, title = 'novel', range = null) => {
+  const url = getDownloadUrl(id, range);
   try {
     const res = await fetch(url, {
       method: 'GET',

@@ -8,11 +8,27 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
 
   const [activeTab, setActiveTab] = useState('info');
   const [downloading, setDownloading] = useState(false);
+  const [downloadingRange, setDownloadingRange] = useState(null);
 
   const coverUrl = normalizeCoverUrl(book.cover);
   const genres = Array.isArray(book.genres) ? book.genres : [];
   const rawStatus = (book.status || 'Completed').toUpperCase();
   const lengthInfo = getReadingLength(book.total_chapters);
+
+  const totalCh = Number(book.total_chapters) || 0;
+  const BATCH_SIZE = 50;
+  const batches = [];
+  if (totalCh > BATCH_SIZE) {
+    for (let s = 1; s <= totalCh; s += BATCH_SIZE) {
+      const e = Math.min(s + BATCH_SIZE - 1, totalCh);
+      batches.push({
+        start: s,
+        end: e,
+        label: `Ch ${String(s).padStart(3, '0')} - ${String(e).padStart(3, '0')}`,
+        count: e - s + 1,
+      });
+    }
+  }
 
   const handleDownload = async () => {
     if (onDownloadClick) {
@@ -23,6 +39,17 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
       await downloadBookFile(book.id, book.title);
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleBatchDownload = async (batch) => {
+    setDownloadingRange(batch.label);
+    try {
+      await downloadBookFile(book.id, `${book.title} (${batch.label})`, batch);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDownloadingRange(null);
     }
   };
 
@@ -73,6 +100,17 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                 Synopsis
               </button>
             </li>
+            {batches.length > 0 && (
+              <li className="nav-item">
+                <button
+                  type="button"
+                  className={`nav-link ${activeTab === 'batches' ? 'active fw-bold' : ''}`}
+                  onClick={() => setActiveTab('batches')}
+                >
+                  Volumes / Batches <span className="badge bg-secondary-subtle text-secondary border ms-1" style={{ fontSize: '9.5px' }}>{batches.length}</span>
+                </button>
+              </li>
+            )}
           </ul>
 
           <div className="modal-body p-3">
@@ -238,6 +276,63 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                   }}
                 >
                   {book.description || 'No synopsis embedded in this ePub.'}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'batches' && (
+              <div>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '10.5px' }}>
+                    MeGaneBuk Standard Arc Batches (50 Ch / Batch)
+                  </span>
+                  <span className="text-muted" style={{ fontSize: '11px' }}>
+                    Total: <b>{book.total_chapters}</b> Chapters
+                  </span>
+                </div>
+                <div className="table-responsive rounded border" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                  <table className="table table-hover table-sm align-middle mb-0" style={{ fontSize: '12px' }}>
+                    <thead className="table-light">
+                      <tr>
+                        <th className="px-3 py-1 font-monospace">Range</th>
+                        <th className="py-1">Chapters</th>
+                        <th className="text-end px-3 py-1">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batches.map((b, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-1 fw-bold font-monospace text-dark">
+                            {b.label}
+                          </td>
+                          <td className="py-1 text-secondary">
+                            {b.count} chapters
+                          </td>
+                          <td className="text-end px-3 py-1">
+                            <button
+                              type="button"
+                              className="btn btn-dark btn-sm rounded-pill px-2 py-0 fw-medium d-inline-flex align-items-center gap-1 shadow-xs"
+                              style={{ fontSize: '10.5px' }}
+                              onClick={() => handleBatchDownload(b)}
+                              disabled={downloadingRange === b.label}
+                            >
+                              {downloadingRange === b.label ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '9px', height: '9px' }}></span>
+                                  Packaging...
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                  Download Part
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
