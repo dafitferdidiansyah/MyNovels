@@ -107,7 +107,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
                   className={`nav-link ${activeTab === 'batches' ? 'active fw-bold' : ''}`}
                   onClick={() => setActiveTab('batches')}
                 >
-                  Volumes / Batches <span className="badge bg-secondary-subtle text-secondary border ms-1" style={{ fontSize: '9.5px' }}>{batches.length}</span>
+                  Download Parts <span className="badge bg-secondary-subtle text-secondary border ms-1" style={{ fontSize: '9.5px' }}>{batches.length}</span>
                 </button>
               </li>
             )}
@@ -284,7 +284,7 @@ export default function BookModal({ book, onClose, onDownloadClick }) {
               <div>
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '10.5px' }}>
-                    MeGaneBuk Standard Arc Batches (50 Ch / Batch)
+                    Select Chapter Range (50 Chapters / Part)
                   </span>
                   <span className="text-muted" style={{ fontSize: '11px' }}>
                     Total: <b>{book.total_chapters}</b> Chapters
